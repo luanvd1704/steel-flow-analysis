@@ -12,8 +12,8 @@ TICKERS = ['HPG', 'HSG', 'NKG']
 # ============================================
 # FILE PATHS
 # ============================================
-# Base directory (parent of steel-flow-analysis)
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# Base directory (root of steel-flow-analysis)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'Stock-analyst')
 
 # Data files
