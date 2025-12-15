@@ -35,14 +35,12 @@ wheels/
 # Streamlit
 .streamlit/secrets.toml
 
-# Data files (DO NOT commit raw data)
-data/raw/**/*.xlsx
-data/raw/**/*.csv
-Stock-analyst/**/*.xlsx
-Stock-analyst/**/*.csv
-*.xlsx
-*.csv
-!data/sample/*.xlsx  # Allow sample data if needed
+# Data files (Note: Including Stock-analyst data for Streamlit Cloud deployment)
+# Uncomment lines below if you want to exclude data files:
+# data/raw/**/*.xlsx
+# data/raw/**/*.csv
+# *.xlsx
+# *.csv
 
 # OS
 .DS_Store
