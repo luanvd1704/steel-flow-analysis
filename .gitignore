@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Data files (DO NOT commit raw data)
+data/raw/**/*.xlsx
+data/raw/**/*.csv
+Stock-analyst/**/*.xlsx
+Stock-analyst/**/*.csv
+*.xlsx
+*.csv
+!data/sample/*.xlsx  # Allow sample data if needed
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Cache
+*.cache
