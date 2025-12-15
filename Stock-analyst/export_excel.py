@@ -30,7 +30,8 @@ def split_thaydoi(value):
         return None, None
 
 # Configuration
-STEEL_TICKERS = ["HPG", "HSG", "NKG", "TLH", "VIS", "SMC", "POM", "TVN"]
+# Only 3 main steel stocks as per README
+STEEL_TICKERS = ["HPG", "HSG", "NKG"]
 
 # Output files (3 separate files)
 OUTPUT_FOREIGN = "steel_foreign_trading.xlsx"
