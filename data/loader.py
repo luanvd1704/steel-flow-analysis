@@ -335,7 +335,7 @@ def get_data_summary(merged_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
             'Total Days': len(df),
             'Foreign Data Points': df[FOREIGN_NET_BUY_VAL].notna().sum(),
             'Self Data Points': df[SELF_NET_BUY_VAL].notna().sum() if SELF_NET_BUY_VAL in df.columns else 0,
-            'Valuation Data Points': df[PE].notna().sum(),
+            'Valuation Data Points': df[PE].notna().sum() if PE in df.columns else 0,
             'Missing Price %': f"{(df[CLOSE].isna().sum() / len(df) * 100):.1f}%"
         }
         summary_data.append(summary)
