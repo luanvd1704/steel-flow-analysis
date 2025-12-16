@@ -1,5 +1,5 @@
 """
-Q1: Foreign Lead/Lag Analysis Page
+Q1: Trang Phân Tích Dẫn/Trễ Của Nhà Đầu Tư Nước Ngoài
 """
 import streamlit as st
 import pandas as pd
@@ -17,17 +17,17 @@ from config.config import TICKERS, FORWARD_RETURN_HORIZONS, CACHE_TTL, QUINTILE_
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
 
-st.set_page_config(page_title="Q1: Foreign Lead/Lag", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Q1: Dẫn/Trễ NDTNN", page_icon="🔍", layout="wide")
 
 # Display logo in sidebar
 display_sidebar_logo()
 
-st.title("🔍 Q1: Foreign Lead/Lag Analysis")
+st.title("🔍 Q1: Phân Tích Dẫn/Trễ Nhà Đầu Tư Nước Ngoài")
 
 st.markdown("""
-**Research Question**: Do foreign investors predict future returns?
+**Câu Hỏi Nghiên Cứu**: Nhà đầu tư nước ngoài có dự đoán được lợi nhuận tương lai không?
 
-This analysis examines whether foreign net buying today predicts stock returns at T+1, T+3, T+5, and T+10.
+Phân tích này xem xét liệu mua ròng của nhà đầu tư nước ngoài hôm nay có dự đoán được lợi nhuận cổ phiếu tại T+1, T+3, T+5 và T+10 hay không.
 """)
 
 # Load data
@@ -35,16 +35,16 @@ This analysis examines whether foreign net buying today predicts stock returns a
 def load_all_data():
     return merge_all_data()
 
-with st.spinner("Loading data..."):
+with st.spinner("Đang tải dữ liệu..."):
     data = load_all_data()
 
 # Sidebar filters
-st.sidebar.header("Filters")
-selected_ticker = st.sidebar.selectbox("Select Ticker", TICKERS)
+st.sidebar.header("Bộ Lọc")
+selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
 selected_horizon = st.sidebar.selectbox(
-    "Forward Return Horizon",
+    "Kỳ Hạn Lợi Nhuận",
     FORWARD_RETURN_HORIZONS,
-    format_func=lambda x: f"T+{x} days"
+    format_func=lambda x: f"T+{x} ngày"
 )
 
 # Run analysis
@@ -52,7 +52,7 @@ selected_horizon = st.sidebar.selectbox(
 def run_lead_lag_analysis(ticker):
     return lead_lag_analysis_full(data[ticker])
 
-with st.spinner(f"Analyzing {selected_ticker}..."):
+with st.spinner(f"Đang phân tích {selected_ticker}..."):
     results = run_lead_lag_analysis(selected_ticker)
 
 # Display results
@@ -62,41 +62,41 @@ if horizon_key in results:
     result = results[horizon_key]
 
     # Summary metrics
-    st.header(f"Results for {selected_ticker} at T+{selected_horizon}")
+    st.header(f"Kết Quả Cho {selected_ticker} Tại T+{selected_horizon}")
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.metric(
-            "Q5 Mean Return",
+            "LN Trung Bình Q5",
             f"{result['q5_mean']:.4f}",
             delta=f"{result['q5_mean']:.2%}"
         )
 
     with col2:
         st.metric(
-            "Q1 Mean Return",
+            "LN Trung Bình Q1",
             f"{result['q1_mean']:.4f}",
             delta=f"{result['q1_mean']:.2%}"
         )
 
     with col3:
         st.metric(
-            "Q5 - Q1 Spread",
+            "Chênh Lệch Q5 - Q1",
             f"{result['spread']:.4f}",
             delta=f"{result['spread']:.2%}"
         )
 
     with col4:
-        significance = "✅ Significant" if result['significant'] else "❌ Not Significant"
+        significance = "✅ Có Ý Nghĩa" if result['significant'] else "❌ Không Có Ý Nghĩa"
         st.metric(
-            "Statistical Test",
+            "Kiểm Định Thống Kê",
             significance,
             delta=f"p={result['p_value']:.4f}"
         )
 
     # Quintile bar chart
-    st.header("Mean Excess Return by Quintile")
+    st.header("Lợi Nhuận Vượt Trội Trung Bình Theo Nhóm")
 
     quintile_stats = result['quintile_stats']
 
@@ -111,9 +111,9 @@ if horizon_key in results:
     ))
 
     fig.update_layout(
-        title=f"Mean Excess Return by Foreign Net Buying Quintile (T+{selected_horizon})",
-        xaxis_title="Quintile (Q1 = Lowest Foreign Net Buy, Q5 = Highest)",
-        yaxis_title="Mean Excess Return",
+        title=f"Lợi Nhuận Vượt Trội TB Theo Nhóm Mua Ròng NN (T+{selected_horizon})",
+        xaxis_title="Nhóm (Q1 = Mua Ròng NN Thấp Nhất, Q5 = Cao Nhất)",
+        yaxis_title="Lợi Nhuận Vượt Trội TB",
         yaxis_tickformat='.2%',
         height=500,
         template='plotly_white'
@@ -122,7 +122,7 @@ if horizon_key in results:
     st.plotly_chart(fig, use_container_width=True)
 
     # Detailed statistics table
-    st.header("Detailed Statistics")
+    st.header("Thống Kê Chi Tiết")
 
     st.dataframe(
         quintile_stats.style.format({
@@ -136,21 +136,21 @@ if horizon_key in results:
 
 # Information Coefficient Analysis
 if 'ic_analysis' in results:
-    st.header("Information Coefficient (IC) Analysis")
+    st.header("Phân Tích Hệ Số Thông Tin (IC)")
 
     st.markdown("""
-    IC measures the correlation between foreign net buying and forward returns.
-    Higher absolute IC indicates stronger predictive power.
+    IC đo lường tương quan giữa mua ròng nước ngoài và lợi nhuận tương lai.
+    IC tuyệt đối cao hơn cho thấy sức mạnh dự đoán mạnh hơn.
     """)
 
     ic_data = []
     for horizon_key, ic_result in results['ic_analysis'].items():
         ic_data.append({
-            'Horizon': horizon_key,
+            'Kỳ Hạn': horizon_key,
             'IC': ic_result['ic'],
             'P-Value': ic_result[P_VALUE],
-            'Significant': '✅' if ic_result['significant'] else '❌',
-            'Sample Size': ic_result['n']
+            'Có Ý Nghĩa': '✅' if ic_result['significant'] else '❌',
+            'Kích Thước Mẫu': ic_result['n']
         })
 
     ic_df = pd.DataFrame(ic_data)
@@ -162,7 +162,7 @@ if 'ic_analysis' in results:
         fig = go.Figure()
 
         fig.add_trace(go.Bar(
-            x=ic_df['Horizon'],
+            x=ic_df['Kỳ Hạn'],
             y=ic_df['IC'],
             marker_color=['green' if x > 0 else 'red' for x in ic_df['IC']],
             text=ic_df['IC'].apply(lambda x: f"{x:.4f}"),
@@ -170,8 +170,8 @@ if 'ic_analysis' in results:
         ))
 
         fig.update_layout(
-            title=f"Information Coefficient by Horizon - {selected_ticker}",
-            xaxis_title="Horizon",
+            title=f"Hệ Số Thông Tin Theo Kỳ Hạn - {selected_ticker}",
+            xaxis_title="Kỳ Hạn",
             yaxis_title="IC",
             height=400,
             template='plotly_white'
@@ -186,13 +186,13 @@ if 'ic_analysis' in results:
             ic_df.style.format({
                 'IC': '{:.4f}',
                 'P-Value': '{:.4f}',
-                'Sample Size': '{:.0f}'
+                'Kích Thước Mẫu': '{:.0f}'
             }),
             use_container_width=True
         )
 
 # All horizons comparison
-st.header("All Horizons Comparison")
+st.header("So Sánh Tất Cả Các Kỳ Hạn")
 
 comparison_data = []
 for horizon in FORWARD_RETURN_HORIZONS:
@@ -200,22 +200,22 @@ for horizon in FORWARD_RETURN_HORIZONS:
     if hkey in results:
         r = results[hkey]
         comparison_data.append({
-            'Horizon': hkey,
-            'Q5 Mean': r['q5_mean'],
-            'Q1 Mean': r['q1_mean'],
-            'Spread': r['spread'],
+            'Kỳ Hạn': hkey,
+            'TB Q5': r['q5_mean'],
+            'TB Q1': r['q1_mean'],
+            'Chênh Lệch': r['spread'],
             'T-Stat': r['t_stat'],
             'P-Value': r['p_value'],
-            'Significant': '✅' if r['significant'] else '❌'
+            'Có Ý Nghĩa': '✅' if r['significant'] else '❌'
         })
 
 comp_df = pd.DataFrame(comparison_data)
 
 st.dataframe(
     comp_df.style.format({
-        'Q5 Mean': '{:.4f}',
-        'Q1 Mean': '{:.4f}',
-        'Spread': '{:.4f}',
+        'TB Q5': '{:.4f}',
+        'TB Q1': '{:.4f}',
+        'Chênh Lệch': '{:.4f}',
         'T-Stat': '{:.2f}',
         'P-Value': '{:.4f}'
     }),
@@ -223,20 +223,20 @@ st.dataframe(
 )
 
 # Interpretation
-st.header("Interpretation")
+st.header("Giải Thích")
 
 st.info("""
-**How to interpret these results:**
+**Cách diễn giải kết quả:**
 
-- **Positive Spread (Q5 > Q1)**: Foreign buying predicts higher future returns
-- **Negative Spread (Q5 < Q1)**: Foreign buying predicts lower future returns (contrarian)
-- **Statistical Significance**: p-value < 0.05 indicates reliable pattern
-- **IC close to 0**: Weak predictive power
-- **|IC| > 0.05**: Moderate predictive power
-- **|IC| > 0.10**: Strong predictive power
+- **Chênh Lệch Dương (Q5 > Q1)**: Mua ròng NN dự đoán lợi nhuận cao hơn trong tương lai
+- **Chênh Lệch Âm (Q5 < Q1)**: Mua ròng NN dự đoán lợi nhuận thấp hơn (nghịch chiều)
+- **Ý Nghĩa Thống Kê**: p-value < 0.05 cho thấy mô hình đáng tin cậy
+- **IC gần 0**: Sức mạnh dự đoán yếu
+- **|IC| > 0.05**: Sức mạnh dự đoán trung bình
+- **|IC| > 0.10**: Sức mạnh dự đoán mạnh
 """)
 
 st.warning("""
-⚠️ **Disclaimer**: Past performance does not guarantee future results.
-This analysis is for research purposes only and should not be considered investment advice.
+⚠️ **Tuyên Bố Miễn Trừ**: Hiệu suất trong quá khứ không đảm bảo kết quả trong tương lai.
+Phân tích này chỉ cho mục đích nghiên cứu và không nên được coi là lời khuyên đầu tư.
 """)

@@ -1,5 +1,5 @@
 """
-Q5: Composite Score Page
+Q5: Trang Điểm Tổng Hợp
 """
 import streamlit as st
 import pandas as pd
@@ -17,27 +17,27 @@ from config.config import TICKERS, CACHE_TTL, SELF_TRADING_WARNING, QUINTILE_COL
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
 
-st.set_page_config(page_title="Q5: Composite", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="Q5: Điểm Tổng Hợp", page_icon="🎯", layout="wide")
 
 # Display logo in sidebar
 display_sidebar_logo()
 
-st.title("🎯 Q5: Composite Scoring Strategy")
+st.title("🎯 Q5: Chiến Lược Điểm Tổng Hợp")
 
 st.markdown("""
-**Research Question**: Can we combine signals for alpha generation?
+**Câu Hỏi Nghiên Cứu**: Chúng ta có thể kết hợp các tín hiệu để tạo alpha không?
 
-**Composite Score Formula**:
+**Công Thức Điểm Tổng Hợp**:
 ```
-Score = z(Foreign Net Buy) + z(Self Net Buy) - percentile(PE/PB)
+Điểm = z(Mua Ròng NN) + z(Mua Ròng Tự Doanh) - phân_vị(PE/PB)
 ```
 
-Where:
-- **z(Foreign)**: Z-score of foreign net buying (252-day window)
-- **z(Self)**: Z-score of self net buying (252-day window)
-- **percentile(PE/PB)**: Average percentile of PE and PB (3-year window, inverted)
+Trong đó:
+- **z(NN)**: Z-score của mua ròng nước ngoài (cửa sổ 252 ngày)
+- **z(Tự Doanh)**: Z-score của mua ròng tự doanh (cửa sổ 252 ngày)
+- **phân_vị(PE/PB)**: Phân vị trung bình của PE và PB (cửa sổ 3 năm, đảo ngược)
 
-**Strategy**: Long Q5 (highest scores), Short Q1 (lowest scores)
+**Chiến Lược**: Long Q5 (điểm cao nhất), Short Q1 (điểm thấp nhất)
 """)
 
 # Load data
@@ -46,21 +46,21 @@ def load_all_data():
     return merge_all_data()
 
 # Sidebar
-st.sidebar.header("Settings")
+st.sidebar.header("Cài Đặt")
 use_self_trading = st.sidebar.checkbox(
-    "Include Self-Trading in Score",
+    "Bao Gồm Tự Doanh Trong Điểm",
     value=True,
-    help="Uncheck to use only Foreign + Valuation (5-year backtest)"
+    help="Bỏ chọn để chỉ dùng NN + Định Giá (backtest 5 năm)"
 )
 
 selected_tickers = st.sidebar.multiselect(
-    "Select Tickers",
+    "Chọn Mã Cổ Phiếu",
     TICKERS,
     default=TICKERS
 )
 
 holding_period = st.sidebar.slider(
-    "Holding Period (days)",
+    "Kỳ Hạn Nắm Giữ (ngày)",
     1, 30, 5
 )
 
@@ -69,7 +69,7 @@ if use_self_trading:
     st.warning(SELF_TRADING_WARNING)
 
 # Load and prepare data
-with st.spinner("Building composite scores..."):
+with st.spinner("Đang xây dựng điểm tổng hợp..."):
     data = load_all_data()
 
     scores_data = {}
@@ -79,26 +79,26 @@ with st.spinner("Building composite scores..."):
         scores_data[ticker] = df
 
 # Current rankings
-st.header("Current Rankings")
+st.header("Xếp Hạng Hiện Tại")
 
-st.markdown("Latest composite scores for all selected tickers")
+st.markdown("Điểm tổng hợp mới nhất cho tất cả các mã đã chọn")
 
 current_rankings = []
 for ticker, df in scores_data.items():
     if COMPOSITE_SCORE in df.columns:
         latest = df.iloc[-1]
         current_rankings.append({
-            'Ticker': ticker,
-            'Composite Score': latest.get(COMPOSITE_SCORE, np.nan),
-            'Date': str(latest.get(DATE, ''))[:10] if DATE in latest.index else 'N/A',
-            'Foreign Z': latest.get(FOREIGN_ZSCORE, np.nan),
-            'Self Z': latest.get(SELF_ZSCORE, np.nan) if use_self_trading else np.nan,
+            'Mã': ticker,
+            'Điểm Tổng Hợp': latest.get(COMPOSITE_SCORE, np.nan),
+            'Ngày': str(latest.get(DATE, ''))[:10] if DATE in latest.index else 'N/A',
+            'Z NN': latest.get(FOREIGN_ZSCORE, np.nan),
+            'Z Tự Doanh': latest.get(SELF_ZSCORE, np.nan) if use_self_trading else np.nan,
             'PE %ile': latest.get(PE_PERCENTILE, np.nan),
             'PB %ile': latest.get(PB_PERCENTILE, np.nan)
         })
 
 if current_rankings:
-    rank_df = pd.DataFrame(current_rankings).sort_values('Composite Score', ascending=False)
+    rank_df = pd.DataFrame(current_rankings).sort_values('Điểm Tổng Hợp', ascending=False)
 
     # Color code
     def color_score(val):
@@ -108,20 +108,20 @@ if current_rankings:
 
     st.dataframe(
         rank_df.style.format({
-            'Composite Score': '{:.2f}',
-            'Foreign Z': '{:.2f}',
-            'Self Z': '{:.2f}',
+            'Điểm Tổng Hợp': '{:.2f}',
+            'Z NN': '{:.2f}',
+            'Z Tự Doanh': '{:.2f}',
             'PE %ile': '{:.1f}',
             'PB %ile': '{:.1f}'
-        }).applymap(color_score, subset=['Composite Score']),
+        }).applymap(color_score, subset=['Điểm Tổng Hợp']),
         use_container_width=True
     )
 
 # Backtest for each ticker
-st.header("Quintile Backtest Results")
+st.header("Kết Quả Backtest Theo Nhóm")
 
 for ticker in selected_tickers:
-    with st.expander(f"📊 {ticker} - Backtest Results"):
+    with st.expander(f"📊 {ticker} - Kết Quả Backtest"):
         df = scores_data[ticker]
 
         # Check data availability
@@ -142,16 +142,16 @@ for ticker in selected_tickers:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Strategy Return (Q5-Q1)", f"{backtest['strategy_returns_mean']:.2%}")
+            st.metric("LN Chiến Lược (Q5-Q1)", f"{backtest['strategy_returns_mean']:.2%}")
 
         with col2:
-            st.metric("Volatility", f"{backtest['strategy_returns_std']:.2%}")
+            st.metric("Độ Biến Động", f"{backtest['strategy_returns_std']:.2%}")
 
         with col3:
-            st.metric("Sharpe Ratio", f"{backtest['sharpe_ratio']:.2f}")
+            st.metric("Tỷ Số Sharpe", f"{backtest['sharpe_ratio']:.2f}")
 
         with col4:
-            st.metric("Sample Size", f"{backtest['sample_size']:,}")
+            st.metric("Kích Thước Mẫu", f"{backtest['sample_size']:,}")
 
         # Quintile returns chart
         quintile_returns = backtest['quintile_returns']
@@ -167,9 +167,9 @@ for ticker in selected_tickers:
         ))
 
         fig.update_layout(
-            title=f"{ticker} - Returns by Composite Score Quintile (Hold {holding_period}d)",
-            xaxis_title="Quintile",
-            yaxis_title="Mean Return",
+            title=f"{ticker} - LN Theo Nhóm Điểm Tổng Hợp (Nắm giữ {holding_period} ngày)",
+            xaxis_title="Nhóm",
+            yaxis_title="LN Trung Bình",
             yaxis_tickformat='.2%',
             height=400,
             template='plotly_white'
@@ -208,27 +208,27 @@ for ticker in selected_tickers:
                     capm = capm_analysis(strategy_rets[common_idx], market_rets[common_idx])
 
                     if 'error' not in capm:
-                        st.subheader("CAPM Analysis (Q5 vs Market)")
+                        st.subheader("Phân Tích CAPM (Q5 vs Thị Trường)")
 
                         col1, col2, col3 = st.columns(3)
 
                         with col1:
-                            st.metric("Alpha (annual)", f"{capm[ALPHA]:.2%}")
+                            st.metric("Alpha (hàng năm)", f"{capm[ALPHA]:.2%}")
 
                         with col2:
                             st.metric("Beta", f"{capm[BETA]:.2f}")
 
                         with col3:
-                            st.metric("Mean Return (annual)", f"{capm['mean_return']:.2%}")
+                            st.metric("LN TB (hàng năm)", f"{capm['mean_return']:.2%}")
 
 # Aggregate performance
-st.header("Aggregate Performance Summary")
+st.header("Tóm Tắt Hiệu Suất Tổng Hợp")
 
 st.markdown(f"""
-**Settings**:
-- Include Self-Trading: {'Yes (3-year backtest)' if use_self_trading else 'No (5-year backtest)'}
-- Holding Period: {holding_period} days
-- Tickers: {', '.join(selected_tickers)}
+**Cài Đặt**:
+- Bao Gồm Tự Doanh: {'Có (backtest 3 năm)' if use_self_trading else 'Không (backtest 5 năm)'}
+- Kỳ Hạn Nắm Giữ: {holding_period} ngày
+- Mã Cổ Phiếu: {', '.join(selected_tickers)}
 """)
 
 agg_data = []
@@ -238,10 +238,10 @@ for ticker in selected_tickers:
 
     if 'error' not in backtest:
         agg_data.append({
-            'Ticker': ticker,
-            'Mean Return (Q5-Q1)': backtest['strategy_returns_mean'],
-            'Sharpe Ratio': backtest['sharpe_ratio'],
-            'Sample Size': backtest['sample_size']
+            'Mã': ticker,
+            'LN TB (Q5-Q1)': backtest['strategy_returns_mean'],
+            'Tỷ Số Sharpe': backtest['sharpe_ratio'],
+            'Kích Thước Mẫu': backtest['sample_size']
         })
 
 if agg_data:
@@ -249,9 +249,9 @@ if agg_data:
 
     st.dataframe(
         agg_df.style.format({
-            'Mean Return (Q5-Q1)': '{:.2%}',
-            'Sharpe Ratio': '{:.2f}',
-            'Sample Size': '{:.0f}'
+            'LN TB (Q5-Q1)': '{:.2%}',
+            'Tỷ Số Sharpe': '{:.2f}',
+            'Kích Thước Mẫu': '{:.0f}'
         }),
         use_container_width=True
     )
@@ -260,46 +260,46 @@ if agg_data:
     col1, col2 = st.columns(2)
 
     with col1:
-        avg_return = agg_df['Mean Return (Q5-Q1)'].mean()
-        st.metric("Average Return Across Tickers", f"{avg_return:.2%}")
+        avg_return = agg_df['LN TB (Q5-Q1)'].mean()
+        st.metric("LN TB Qua Các Mã", f"{avg_return:.2%}")
 
     with col2:
-        avg_sharpe = agg_df['Sharpe Ratio'].mean()
-        st.metric("Average Sharpe Ratio", f"{avg_sharpe:.2f}")
+        avg_sharpe = agg_df['Tỷ Số Sharpe'].mean()
+        st.metric("Tỷ Số Sharpe TB", f"{avg_sharpe:.2f}")
 
 # Interpretation
-st.header("Interpretation")
+st.header("Giải Thích")
 
 st.info("""
-**How to use this strategy**:
+**Cách sử dụng chiến lược này**:
 
-1. **High Scores (Q5)**:
-   - Strong foreign/self buying
-   - Low valuation percentiles (cheap)
-   - → Long candidates
+1. **Điểm Cao (Q5)**:
+   - Mua ròng mạnh từ NN/tự doanh
+   - Phân vị định giá thấp (rẻ)
+   - → Ứng viên Long
 
-2. **Low Scores (Q1)**:
-   - Weak/negative flows
-   - High valuation percentiles (expensive)
-   - → Short candidates or avoid
+2. **Điểm Thấp (Q1)**:
+   - Dòng tiền yếu/âm
+   - Phân vị định giá cao (đắt)
+   - → Ứng viên Short hoặc tránh
 
-3. **Performance Metrics**:
-   - **Positive Mean Return**: Strategy works
-   - **Sharpe > 1**: Good risk-adjusted performance
-   - **Positive Alpha**: Beats market after risk adjustment
+3. **Chỉ Số Hiệu Suất**:
+   - **LN TB Dương**: Chiến lược hoạt động
+   - **Sharpe > 1**: Hiệu suất điều chỉnh rủi ro tốt
+   - **Alpha Dương**: Vượt thị trường sau khi điều chỉnh rủi ro
 
-**Without Self-Trading**: Longer backtest (5 years) but fewer signals
-**With Self-Trading**: Shorter backtest (3 years) but more complete signal
+**Không Có Tự Doanh**: Backtest dài hơn (5 năm) nhưng ít tín hiệu hơn
+**Có Tự Doanh**: Backtest ngắn hơn (3 năm) nhưng tín hiệu đầy đủ hơn
 """)
 
 st.warning("""
-⚠️ **Critical Disclaimers**:
+⚠️ **Tuyên Bố Miễn Trừ Quan Trọng**:
 
-1. **Past Performance ≠ Future Results**: Historical patterns may not continue
-2. **Transaction Costs**: Not included in backtest (slippage, commissions, impact)
-3. **Limited Data**: Especially self-trading (3 years only)
-4. **Market Regime**: Results may vary in different market conditions
-5. **Not Investment Advice**: This is research/educational only
+1. **Hiệu Suất Quá Khứ ≠ Kết Quả Tương Lai**: Các mô hình lịch sử có thể không tiếp tục
+2. **Chi Phí Giao Dịch**: Không bao gồm trong backtest (trượt giá, hoa hồng, tác động)
+3. **Dữ Liệu Giới Hạn**: Đặc biệt tự doanh (chỉ 3 năm)
+4. **Chế Độ Thị Trường**: Kết quả có thể khác nhau ở các điều kiện thị trường khác nhau
+5. **Không Phải Lời Khuyên Đầu Tư**: Đây chỉ là nghiên cứu/giáo dục
 
-**DO NOT use this as sole basis for investment decisions!**
+**ĐỪNG sử dụng đây làm cơ sở duy nhất cho quyết định đầu tư!**
 """)

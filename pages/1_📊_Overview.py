@@ -1,6 +1,6 @@
 """
-Overview Page
-Data summary and quality checks
+Trang Tổng Quan
+Tóm tắt dữ liệu và kiểm tra chất lượng
 """
 import streamlit as st
 import pandas as pd
@@ -17,12 +17,12 @@ from config.config import TICKERS, CACHE_TTL
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
 
-st.set_page_config(page_title="Overview", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Tổng Quan", page_icon="📊", layout="wide")
 
 # Display logo in sidebar
 display_sidebar_logo()
 
-st.title("📊 Data Overview")
+st.title("📊 Tổng Quan Dữ Liệu")
 
 # Load data with caching
 @st.cache_data(ttl=CACHE_TTL)
@@ -34,17 +34,17 @@ def get_summary(data):
     return get_data_summary(data)
 
 # Load data
-with st.spinner("Loading data..."):
+with st.spinner("Đang tải dữ liệu..."):
     data = load_all_data()
     summary = get_summary(data)
 
 # Display summary
-st.header("Data Summary")
+st.header("Tóm Tắt Dữ Liệu")
 
 st.dataframe(summary, use_container_width=True)
 
 # Timeline visualization
-st.header("Data Coverage Timeline")
+st.header("Thời Gian Phủ Sóng Dữ Liệu")
 
 fig = go.Figure()
 
@@ -59,9 +59,9 @@ for _, row in summary.iterrows():
     ))
 
 fig.update_layout(
-    title="Data Coverage by Ticker",
-    xaxis_title="Date",
-    yaxis_title="Ticker",
+    title="Phủ Sóng Dữ Liệu Theo Mã Cổ Phiếu",
+    xaxis_title="Ngày",
+    yaxis_title="Mã",
     height=300,
     showlegend=True
 )
@@ -69,13 +69,13 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # Data quality metrics
-st.header("Data Quality Metrics")
+st.header("Chỉ Số Chất Lượng Dữ Liệu")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric(
-        "Tickers Loaded",
+        "Số Mã Đã Tải",
         len(data),
         delta=None
     )
@@ -83,7 +83,7 @@ with col1:
 with col2:
     avg_days = int(summary['Total Days'].mean())
     st.metric(
-        "Avg Data Points",
+        "Điểm Dữ Liệu Trung Bình",
         f"{avg_days:,}",
         delta=None
     )
@@ -91,23 +91,23 @@ with col2:
 with col3:
     avg_foreign = int(summary['Foreign Data Points'].mean())
     st.metric(
-        "Avg Foreign Trading Points",
+        "Điểm Giao Dịch Nước Ngoài TB",
         f"{avg_foreign:,}",
         delta=None
     )
 
 # Missing data analysis
-st.header("Missing Data Analysis")
+st.header("Phân Tích Dữ Liệu Thiếu")
 
 missing_data = []
 for ticker, df in data.items():
     missing_row = {
-        'Ticker': ticker,
-        'Foreign Net Buy': f"{(df[FOREIGN_NET_BUY_VAL].isna().sum() / len(df) * 100):.1f}%",
-        'Self Net Buy': f"{(df[SELF_NET_BUY_VAL].isna().sum() / len(df) * 100):.1f}%" if SELF_NET_BUY_VAL in df.columns else "N/A",
+        'Mã': ticker,
+        'Mua Ròng NN': f"{(df[FOREIGN_NET_BUY_VAL].isna().sum() / len(df) * 100):.1f}%",
+        'Mua Ròng Tự Doanh': f"{(df[SELF_NET_BUY_VAL].isna().sum() / len(df) * 100):.1f}%" if SELF_NET_BUY_VAL in df.columns else "N/A",
         'PE': f"{(df[PE].isna().sum() / len(df) * 100):.1f}%" if PE in df.columns else "N/A",
         'PB': f"{(df[PB].isna().sum() / len(df) * 100):.1f}%" if PB in df.columns else "N/A",
-        'Close': f"{(df[CLOSE].isna().sum() / len(df) * 100):.1f}%"
+        'Giá Đóng Cửa': f"{(df[CLOSE].isna().sum() / len(df) * 100):.1f}%"
     }
     missing_data.append(missing_row)
 
@@ -115,14 +115,14 @@ missing_df = pd.DataFrame(missing_data)
 st.dataframe(missing_df, use_container_width=True)
 
 # Sample data
-st.header("Sample Data")
+st.header("Dữ Liệu Mẫu")
 
-selected_ticker = st.selectbox("Select Ticker", TICKERS)
+selected_ticker = st.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
 
 if selected_ticker in data:
     ticker_df = data[selected_ticker]
 
-    st.subheader(f"{selected_ticker} - Latest 10 Days")
+    st.subheader(f"{selected_ticker} - 10 Ngày Gần Nhất")
 
     # Select columns to display
     display_cols = [DATE, CLOSE, FOREIGN_NET_BUY_VAL, MARKET_RETURN]
@@ -142,12 +142,12 @@ if selected_ticker in data:
 
 # Warnings
 st.warning("""
-⚠️ **Data Limitations**:
+⚠️ **Giới Hạn Dữ Liệu**:
 - Dữ liệu tự doanh chỉ có từ 2022-11 (3 năm)
 - Một số ngày có thể thiếu dữ liệu giao dịch (NaN)
-- Giá được forward-fill nhưng trading data giữ nguyên NaN
+- Giá được forward-fill nhưng dữ liệu giao dịch giữ nguyên NaN
 """)
 
 st.info("""
-💡 **Tip**: Sử dụng sidebar để điều hướng đến các trang phân tích cụ thể
+💡 **Mẹo**: Sử dụng thanh bên để điều hướng đến các trang phân tích cụ thể
 """)

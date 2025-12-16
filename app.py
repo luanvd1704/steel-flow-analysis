@@ -21,7 +21,7 @@ st.set_page_config(
 logo_path = os.path.join(os.path.dirname(__file__), "assets", "logo.jpg")
 
 # Main landing page
-st.title(f"{PAGE_ICON} Steel Flow Analysis Platform")
+st.title(f"{PAGE_ICON} Nền tảng Phân tích Luồng Giao dịch Thép")
 
 st.markdown("""
 ## Chào mừng đến với Nền tảng Phân tích Luồng Giao dịch Thép
@@ -78,9 +78,9 @@ Platform này phân tích 5 câu hỏi nghiên cứu quan trọng về 3 cổ ph
 
 ### ℹ️ Thông tin:
 
-- **Tickers**: HPG (Hòa Phát), HSG (Hoa Sen), NKG (Nam Kim)
-- **Methodology**: Event study, quintile analysis, statistical testing
-- **Rigor**: T-tests, p-values, confidence intervals
+- **Mã cổ phiếu**: HPG (Hòa Phát), HSG (Hoa Sen), NKG (Nam Kim)
+- **Phương pháp**: Event study, phân tích quintile, kiểm định thống kê
+- **Độ chính xác**: T-tests, p-values, khoảng tin cậy
 
 ---
 

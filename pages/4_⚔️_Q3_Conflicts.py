@@ -1,5 +1,5 @@
 """
-Q3: Foreign vs Self Conflicts Page
+Q3: Trang Xung Đột Nước Ngoài vs Tự Doanh
 """
 import streamlit as st
 import pandas as pd
@@ -19,20 +19,20 @@ from config.config import TICKERS, CACHE_TTL, SELF_TRADING_WARNING
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
 
-st.set_page_config(page_title="Q3: Conflicts", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="Q3: Xung Đột", page_icon="⚔️", layout="wide")
 
 # Display logo in sidebar
 display_sidebar_logo()
 
-st.title("⚔️ Q3: Foreign vs Self Conflicts")
+st.title("⚔️ Q3: Xung Đột Nước Ngoài vs Tự Doanh")
 
 st.markdown("""
-**Research Question**: Who leads when foreign and self-trading flows disagree?
+**Câu Hỏi Nghiên Cứu**: Ai dẫn dắt khi dòng tiền nước ngoài và tự doanh bất đồng?
 
-This analysis examines:
-1. **Conflict States**: Returns when foreign and self traders disagree
-2. **Leadership**: Who predicts whom using Granger causality
-3. **Market Regime**: Do patterns differ in bull vs bear markets?
+Phân tích này xem xét:
+1. **Trạng Thái Xung Đột**: Lợi nhuận khi nhà đầu tư nước ngoài và tự doanh bất đồng
+2. **Vai Trò Dẫn Dắt**: Ai dự đoán ai bằng nhân quả Granger
+3. **Chế Độ Thị Trường**: Các mô hình có khác nhau trong thị trường tăng/giảm không?
 """)
 
 st.warning(SELF_TRADING_WARNING)
@@ -43,12 +43,12 @@ def load_all_data():
     return merge_all_data()
 
 # Sidebar
-st.sidebar.header("Filters")
-selected_ticker = st.sidebar.selectbox("Select Ticker", TICKERS)
-selected_horizon = st.sidebar.selectbox("Forward Horizon", [5, 10], format_func=lambda x: f"T+{x}")
+st.sidebar.header("Bộ Lọc")
+selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
+selected_horizon = st.sidebar.selectbox("Kỳ Hạn Lợi Nhuận", [5, 10], format_func=lambda x: f"T+{x}")
 
 # Load data
-with st.spinner("Loading data..."):
+with st.spinner("Đang tải dữ liệu..."):
     data = load_all_data()
     df = data[selected_ticker]
 
@@ -60,10 +60,10 @@ if not availability['available']:
     st.stop()
 
 # Data info
-st.info(f"📊 Self-trading data: {availability['data_points']:,} points | Coverage: {availability['coverage']:.1%}")
+st.info(f"📊 Dữ liệu tự doanh: {availability['data_points']:,} điểm | Phủ sóng: {availability['coverage']:.1%}")
 
 # Conflict state analysis
-st.header(f"Conflict State Analysis - T+{selected_horizon}")
+st.header(f"Phân Tích Trạng Thái Xung Đột - T+{selected_horizon}")
 
 @st.cache_data(ttl=CACHE_TTL)
 def run_conflict_analysis(ticker):
@@ -77,7 +77,7 @@ if horizon_key in results and 'error' not in results[horizon_key]:
     state_returns = result['state_returns']
 
     # Conflict matrix heatmap
-    st.subheader("Returns by Conflict State")
+    st.subheader("Lợi Nhuận Theo Trạng Thái Xung Đột")
 
     # Create 2x2 matrix
     matrix_data = {
@@ -109,9 +109,9 @@ if horizon_key in results and 'error' not in results[horizon_key]:
     ))
 
     fig.update_layout(
-        title=f"{selected_ticker} - Forward Returns by Conflict State (T+{selected_horizon})",
-        xaxis_title="Conflict State",
-        yaxis_title="Mean Forward Return",
+        title=f"{selected_ticker} - Lợi Nhuận Theo Trạng Thái Xung Đột (T+{selected_horizon})",
+        xaxis_title="Trạng Thái Xung Đột",
+        yaxis_title="Lợi Nhuận Trung Bình",
         yaxis_tickformat='.2%',
         height=500,
         template='plotly_white'
@@ -122,7 +122,7 @@ if horizon_key in results and 'error' not in results[horizon_key]:
     st.plotly_chart(fig, use_container_width=True)
 
     # Detailed table
-    st.subheader("Detailed Statistics")
+    st.subheader("Thống Kê Chi Tiết")
     st.dataframe(
         state_returns.style.format({
             'mean': '{:.4f}',
@@ -133,44 +133,44 @@ if horizon_key in results and 'error' not in results[horizon_key]:
     )
 
     # Key insights
-    st.subheader("Key Insights")
+    st.subheader("Những Phát Hiện Chính")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.write("**Conflict States (Disagreement)**:")
+        st.write("**Trạng Thái Xung Đột (Bất đồng)**:")
         fb_ss = matrix_data.get(FOREIGN_BUY_SELF_SELL, 0)
         fs_sb = matrix_data.get(FOREIGN_SELL_SELF_BUY, 0)
 
-        st.write(f"- Foreign Buy, Self Sell: {fb_ss:.2%}")
-        st.write(f"- Foreign Sell, Self Buy: {fs_sb:.2%}")
+        st.write(f"- NN Mua, Tự Doanh Bán: {fb_ss:.2%}")
+        st.write(f"- NN Bán, Tự Doanh Mua: {fs_sb:.2%}")
 
         if fb_ss > fs_sb:
-            st.success("✅ Foreign buying signal stronger when they disagree")
+            st.success("✅ Tín hiệu mua của NN mạnh hơn khi bất đồng")
         else:
-            st.info("📊 Self buying signal stronger when they disagree")
+            st.info("📊 Tín hiệu mua của tự doanh mạnh hơn khi bất đồng")
 
     with col2:
-        st.write("**Agreement States**:")
+        st.write("**Trạng Thái Thống Nhất**:")
         both_buy = matrix_data.get(BOTH_BUY, 0)
         both_sell = matrix_data.get(BOTH_SELL, 0)
 
-        st.write(f"- Both Buy: {both_buy:.2%}")
-        st.write(f"- Both Sell: {both_sell:.2%}")
+        st.write(f"- Cả Hai Mua: {both_buy:.2%}")
+        st.write(f"- Cả Hai Bán: {both_sell:.2%}")
 
         if both_buy > 0:
-            st.success("✅ Positive returns when both buy")
+            st.success("✅ Lợi nhuận dương khi cả hai mua")
         if both_sell < 0:
-            st.info("📉 Negative returns when both sell")
+            st.info("📉 Lợi nhuận âm khi cả hai bán")
 
 else:
-    st.error("Unable to perform conflict analysis")
+    st.error("Không thể thực hiện phân tích xung đột")
 
 # Leadership analysis
-st.header("Leadership Analysis (Granger Causality)")
+st.header("Phân Tích Vai Trò Dẫn Dắt (Nhân Quả Granger)")
 
 st.markdown("""
-This test examines whether one group's trading helps predict the other's trading.
+Kiểm định này xem xét liệu giao dịch của một nhóm có giúp dự đoán giao dịch của nhóm kia hay không.
 """)
 
 @st.cache_data(ttl=CACHE_TTL)
@@ -183,8 +183,8 @@ if 'error' not in leadership:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Foreign → Self")
-        st.caption("Does foreign trading predict self trading?")
+        st.subheader("NN → Tự Doanh")
+        st.caption("NN có dự đoán được tự doanh không?")
 
         foreign_self = leadership['foreign_leads_self']
 
@@ -194,11 +194,11 @@ if 'error' not in leadership:
 
             if len(sig_lags) > 0:
                 best_lag = sig_lags.iloc[0]
-                st.success(f"✅ Significant at lag {int(best_lag['lag'])}")
-                st.write(f"- Correlation: {best_lag['correlation']:.4f}")
+                st.success(f"✅ Có ý nghĩa tại độ trễ {int(best_lag['lag'])}")
+                st.write(f"- Tương quan: {best_lag['correlation']:.4f}")
                 st.write(f"- P-value: {best_lag[P_VALUE]:.4f}")
             else:
-                st.info("No significant lags found")
+                st.info("Không tìm thấy độ trễ có ý nghĩa")
 
             st.dataframe(
                 foreign_self.head(5).style.format({
@@ -209,8 +209,8 @@ if 'error' not in leadership:
             )
 
     with col2:
-        st.subheader("Self → Foreign")
-        st.caption("Does self trading predict foreign trading?")
+        st.subheader("Tự Doanh → NN")
+        st.caption("Tự doanh có dự đoán được NN không?")
 
         self_foreign = leadership['self_leads_foreign']
 
@@ -219,11 +219,11 @@ if 'error' not in leadership:
 
             if len(sig_lags) > 0:
                 best_lag = sig_lags.iloc[0]
-                st.success(f"✅ Significant at lag {int(best_lag['lag'])}")
-                st.write(f"- Correlation: {best_lag['correlation']:.4f}")
+                st.success(f"✅ Có ý nghĩa tại độ trễ {int(best_lag['lag'])}")
+                st.write(f"- Tương quan: {best_lag['correlation']:.4f}")
                 st.write(f"- P-value: {best_lag[P_VALUE]:.4f}")
             else:
-                st.info("No significant lags found")
+                st.info("Không tìm thấy độ trễ có ý nghĩa")
 
             st.dataframe(
                 self_foreign.head(5).style.format({
@@ -237,7 +237,7 @@ else:
     st.error(leadership['error'])
 
 # Regime analysis
-st.header("Analysis by Market Regime")
+st.header("Phân Tích Theo Chế Độ Thị Trường")
 
 @st.cache_data(ttl=CACHE_TTL)
 def run_regime_analysis(ticker, horizon):
@@ -250,7 +250,8 @@ if regime_results:
 
     for col, (regime_name, regime_result) in zip([col1, col2], regime_results.items()):
         with col:
-            st.subheader(f"{regime_name} Market")
+            regime_vn = "Tăng" if "Bull" in regime_name else "Giảm"
+            st.subheader(f"Thị Trường {regime_vn}")
 
             if 'error' not in regime_result and 'state_returns' in regime_result:
                 state_returns = regime_result['state_returns']
@@ -263,30 +264,30 @@ if regime_results:
                     use_container_width=True
                 )
             else:
-                st.info(regime_result.get('error', 'No data'))
+                st.info(regime_result.get('error', 'Không có dữ liệu'))
 
 # Interpretation
-st.header("Interpretation")
+st.header("Giải Thích")
 
 st.info("""
-**How to interpret these results:**
+**Cách diễn giải kết quả:**
 
-**Conflict States**:
-- **Both Buy / Both Sell**: Agreement between foreign and self
-- **Disagreement states**: Who wins when they conflict?
+**Trạng Thái Xung Đột**:
+- **Cả Hai Mua / Cả Hai Bán**: Thống nhất giữa NN và tự doanh
+- **Trạng thái bất đồng**: Ai thắng khi họ xung đột?
 
-**Leadership (Granger Causality)**:
-- **Significant p-value**: One group helps predict the other
-- **Foreign → Self significant**: Foreign traders lead
-- **Self → Foreign significant**: Self traders lead
+**Vai Trò Dẫn Dắt (Nhân Quả Granger)**:
+- **P-value có ý nghĩa**: Một nhóm giúp dự đoán nhóm kia
+- **NN → Tự Doanh có ý nghĩa**: NN dẫn dắt
+- **Tự Doanh → NN có ý nghĩa**: Tự doanh dẫn dắt
 
-**Market Regime**:
-- Patterns may differ in bull vs bear markets
+**Chế Độ Thị Trường**:
+- Các mô hình có thể khác nhau trong thị trường tăng/giảm
 """)
 
 st.warning("""
-⚠️ **Limitations**:
-- Self-trading data limited to ~3 years
-- Granger causality tests correlation, not true causation
-- Results may vary across different market conditions
+⚠️ **Giới Hạn**:
+- Dữ liệu tự doanh giới hạn ~3 năm
+- Nhân quả Granger kiểm tra tương quan, không phải nhân quả thực sự
+- Kết quả có thể khác nhau ở các điều kiện thị trường khác nhau
 """)

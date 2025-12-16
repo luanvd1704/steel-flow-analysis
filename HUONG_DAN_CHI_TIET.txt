@@ -1,0 +1,531 @@
+================================================================================
+              HƯỚNG DẪN CHI TIẾT - STEEL FLOW ANALYSIS PLATFORM
+                        (Dành cho người có kiến thức thống kê)
+================================================================================
+
+📊 GIỚI THIỆU
+--------------
+Steel Flow Analysis Platform là nền tảng phân tích luồng giao dịch 3 cổ phiếu
+thép: HPG (Hòa Phát), HSG (Hoa Sen), NKG (Nam Kim).
+
+Platform nghiên cứu 5 câu hỏi quan trọng về giao dịch khối ngoại, tự doanh,
+và định giá để tìm ra tín hiệu có thể dự đoán lợi nhuận tương lai.
+
+
+🚀 BẮT ĐẦU
+-----------
+1. Truy cập link Streamlit Cloud (URL được chia sẻ)
+2. Trang chủ sẽ hiển thị tổng quan về 5 câu hỏi nghiên cứu
+3. Sử dụng SIDEBAR bên trái để chọn trang phân tích
+
+
+================================================================================
+⚡ QUICK START - 5 BƯỚC NHANH CHO NGƯỜI BẬN
+================================================================================
+
+Bạn không muốn đọc 400+ dòng? Làm theo 5 bước này:
+
+🔹 BƯỚC 1: MỞ LINK
+   → Click vào link Streamlit Cloud được chia sẻ
+   → Đợi trang load (5-10 giây)
+
+🔹 BƯỚC 2: CHỌN TRANG PHÂN TÍCH
+   → Nhìn sidebar bên TRÁI
+   → Chọn "Q1 - Foreign Lead/Lag" (trang phân tích khối ngoại)
+
+🔹 BƯỚC 3: CHỌN THÔNG SỐ
+   → Chọn cổ phiếu "HPG" từ dropdown (hoặc HSG, NKG nếu thích)
+   → Chọn Forward Return Horizon = T+5 (dự đoán lợi nhuận sau 5 ngày)
+
+🔹 BƯỚC 4: ĐỌC BIỂU ĐỒ
+   → Nhìn biểu đồ "Mean Excess Return by Quintile"
+   → Q5 (cột ngoài cùng bên phải) = Khối ngoại MUA mạnh
+   → Q1 (cột ngoài cùng bên trái) = Khối ngoại BÁN mạnh
+   → Nếu Q5 cao hơn Q1 → Khối ngoại mua thì giá TĂNG ✅
+
+🔹 BƯỚC 5: KIỂM TRA P-VALUE
+   → Nhìn dòng "P-value" bên dưới biểu đồ
+   → Nếu p < 0.05 → Kết quả TIN ĐƯỢC ✅
+   → Nếu p > 0.05 → Không có ý nghĩa, BỎ QUA ❌
+
+🎉 XONG! Bạn đã hiểu cách đọc tín hiệu khối ngoại!
+
+→ Muốn hiểu sâu hơn? Đọc phần "HƯỚNG DẪN CHI TIẾT" bên dưới
+
+
+================================================================================
+🗺️ LỘ TRÌNH PHÂN TÍCH - BẠN MUỐN TÌM HIỂU GÌ?
+================================================================================
+
+📍 Chọn lộ trình phù hợp với mục đích của bạn:
+
+┌─────────────────────────────────────────────────────────────┐
+│  BẠN MUỐN...                     │  XEM TRANG...            │
+├─────────────────────────────────────────────────────────────┤
+│  📊 Hiểu tổng quan dữ liệu       │  → OVERVIEW              │
+│  🔍 Phân tích khối ngoại          │  → Q1 (Foreign Lead/Lag) │
+│  💼 Phân tích tự doanh            │  → Q2 (Self-Trading)     │
+│  ⚔️  So sánh ngoại vs tự doanh   │  → Q3 (Conflicts)        │
+│  💰 Tìm cổ phiếu rẻ/đắt          │  → Q4 (Valuation)        │
+│  🎯 Chiến lược tổng hợp          │  → Q5 (Composite Score)  │
+└─────────────────────────────────────────────────────────────┘
+
+💡 GợI Ý THEO CẤP ĐỘ:
+
+   🟢 NGƯỜI MỚI (Chưa biết gì về phân tích):
+      1. Overview → Xem dữ liệu cơ bản
+      2. Q1 → Hiểu khối ngoại (dễ nhất, dữ liệu nhiều)
+      3. Q4 → Hiểu định giá PE/PB
+
+   🟡 TRUNG CẤP (Đã biết cơ bản):
+      1. Q1 → Tín hiệu khối ngoại
+      2. Q2 → Tín hiệu tự doanh
+      3. Q5 → Kết hợp 2 tín hiệu
+
+   🔴 NÂNG CAO (Muốn nghiên cứu sâu):
+      1. Q3 → Phân tích xung đột
+      2. Q5 → Backtest chiến lược
+      3. So sánh 3 ticker (HPG vs HSG vs NKG)
+
+
+================================================================================
+📖 HƯỚNG DẪN CHI TIẾT TỪNG TRANG
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 TRANG 1: OVERVIEW (TỔNG QUAN)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Mục đích:
+   Xem tổng quan dữ liệu và thống kê cơ bản của 3 cổ phiếu
+
+🎛️ Cách sử dụng:
+   1. Chọn cổ phiếu muốn xem (HPG/HSG/NKG) từ dropdown
+   2. Xem các metrics tổng quan:
+      • Số ngày giao dịch
+      • Tỷ lệ dữ liệu thiếu
+      • Giá trung bình, cao nhất, thấp nhất
+
+   3. Xem các biểu đồ:
+      • Biểu đồ giá theo thời gian (so với VN-Index)
+      • Khối lượng giao dịch
+      • Giao dịch khối ngoại và tự doanh
+
+💡 Cách đọc:
+   - Đường màu xanh: Giá cổ phiếu
+   - Đường VN-Index: Chỉ số thị trường chung (để so sánh)
+   - Cột màu xanh lá: Khối ngoại MUA RÒNG (dương = mua nhiều hơn bán)
+   - Cột màu đỏ: Khối ngoại BÁN RÒNG (âm = bán nhiều hơn mua)
+   - Tương tự cho tự doanh
+
+📊 Lưu ý về VN-Index:
+   • VN-Index là chỉ số thị trường chung của HOSE
+   • Được dùng để tính "Excess Return" = Lợi nhuận cổ phiếu - Lợi nhuận VN-Index
+   • Giúp loại bỏ ảnh hưởng của thị trường chung, tập trung vào cổ phiếu cụ thể
+   • Ví dụ: HPG tăng 5% và VN-Index tăng 2% → Excess Return = 3%
+             (HPG tốt hơn thị trường 3%)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 TRANG 2: Q1 - FOREIGN LEAD/LAG (KHỐI NGOẠI DỰ ĐOÁN GIÁ)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Câu hỏi nghiên cứu:
+   "Khi khối ngoại mua/bán mạnh hôm nay, giá cổ phiếu có lên/xuống
+    trong các ngày tiếp theo không?"
+
+🎛️ Các tùy chọn:
+   • Ticker: Chọn cổ phiếu (HPG/HSG/NKG)
+
+   • Forward Return Horizon: Dự đoán lợi nhuận sau bao nhiêu ngày
+     → T+1 = ngày mai, T+5 = sau 5 ngày, T+10 = sau 10 ngày
+     → T+20 = sau 20 ngày, T+30 = sau 30 ngày (trung hạn)
+
+📊 Cách đọc biểu đồ:
+
+   1. QUINTILE ANALYSIS (Chia thành 5 nhóm):
+      • Q1: Khối ngoại BÁN MẠNH nhất (20% ngày có net buy thấp nhất)
+      • Q2, Q3, Q4: Trung bình
+      • Q5: Khối ngoại MUA MẠNH nhất (20% ngày có net buy cao nhất)
+
+   2. Mean Excess Return by Quintile:
+      • Trục Y: Lợi nhuận trung bình (%)
+      • Nếu Q5 > Q1 → Khối ngoại MUA mạnh thì giá TĂNG sau đó
+      • Nếu Q5 < Q1 → Khối ngoại MUA mạnh thì giá GIẢM sau đó (hiếm)
+
+   3. P-value:
+      • < 0.05: Kết quả có ý nghĩa thống kê (TIN ĐƯỢC)
+      • > 0.05: Không có ý nghĩa thống kê (có thể do ngẫu nhiên)
+
+📊 Lưu ý về VN-Index:
+   • Được dùng để tính "Excess Return" = Lợi nhuận cổ phiếu - Lợi nhuận VN-Index
+   • Giúp loại bỏ ảnh hưởng của thị trường chung, tập trung vào cổ phiếu cụ thể
+   • Ví dụ: HPG tăng 5% và VN-Index tăng 2% → Excess Return = 3%
+             (HPG tốt hơn thị trường 3%)
+
+💡 Ví dụ thực tế:
+   Nếu thấy:
+   - Q5 = +2.5%, Q1 = -1.0%, p-value = 0.02
+   → Nghĩa là: Khi khối ngoại mua mạnh, giá trung bình tăng 2.5% sau T ngày
+                Khi khối ngoại bán mạnh, giá trung bình giảm 1.0%
+                Kết quả này đáng tin (p < 0.05)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💼 TRANG 3: Q2 - SELF-TRADING SIGNALS (TÍN HIỆU TỰ DOANH)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Câu hỏi nghiên cứu:
+   "Tự doanh (các công ty chứng khoán tự giao dịch) có khả năng kiếm lời không?"
+
+🎛️ Các tùy chọn:
+   • Ticker: Chọn cổ phiếu
+   • Normalization Method:
+     - ADV20: Net Buy chia cho khối lượng trung bình 20 ngày
+     - GTGD: Net Buy chia cho tổng giá trị giao dịch
+
+   • Forward Return Horizon: Dự đoán sau bao nhiêu ngày
+
+📊 Cách đọc:
+
+   1. TERCILE ANALYSIS (Chia thành 3 nhóm):
+      • T1: Tự doanh BÁN mạnh nhất
+      • T2: Trung bình
+      • T3: Tự doanh MUA mạnh nhất
+
+   2. Information Coefficient (IC):
+      • Đo lường mức độ tương quan giữa tín hiệu tự doanh và lợi nhuận
+      • IC > 0: Tự doanh mua → giá tăng (tín hiệu TỐT)
+      • IC < 0: Tự doanh mua → giá giảm (tín hiệu XẤU)
+      • |IC| > 0.05: Tín hiệu mạnh
+      • |IC| < 0.02: Tín hiệu yếu
+
+💡 Lưu ý:
+   ⚠️ Dữ liệu tự doanh chỉ có từ 2022-11 (3 năm) nên kết quả có thể
+      thiếu sức mạnh thống kê so với khối ngoại (5 năm dữ liệu)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚔️ TRANG 4: Q3 - FOREIGN VS SELF CONFLICTS (XUNG ĐỘT GIAO DỊCH)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Câu hỏi nghiên cứu:
+   "Khi khối ngoại và tự doanh giao dịch NGƯỢC CHIỀU nhau,
+    nên tin ai? Ai dẫn dắt thị trường?"
+
+🎛️ Các tùy chọn:
+   • Ticker: Chọn cổ phiếu
+   • Event Window: Cửa sổ sự kiện
+     - (1, 5): Xem lợi nhuận từ ngày 1 đến ngày 5 sau sự kiện
+     - (1, 10): Xem lợi nhuận từ ngày 1 đến ngày 10 sau sự kiện
+
+📊 Cách đọc:
+
+   1. Event Study Results:
+      • "Foreign Buy + Self Sell": Ngoại MUA, Tự doanh BÁN
+        → Nếu lợi nhuận dương → TIN NGOẠI
+        → Nếu lợi nhuận âm → TIN TỰ DOANH
+
+      • "Foreign Sell + Self Buy": Ngoại BÁN, Tự doanh MUA
+        → Nếu lợi nhuận âm → TIN NGOẠI
+        → Nếu lợi nhuận dương → TIN TỰ DOANH
+
+   2. Granger Causality Test:
+      • Kiểm định xem ai "dẫn dắt" ai
+      • "Foreign → Self": Ngoại dẫn trước, tự doanh theo sau
+      • "Self → Foreign": Tự doanh dẫn trước, ngoại theo sau
+
+💡 Ví dụ:
+   Nếu thấy "Foreign Buy + Self Sell" có lợi nhuận +1.5% (p < 0.05)
+   → Khi ngoại mua mà tự doanh bán, GIÁ VẪN TĂNG
+   → Nghĩa là KHỐI NGOẠI mạnh hơn, nên tin khối ngoại
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 TRANG 5: Q4 - VALUATION PERCENTILES (ĐỊNH GIÁ RẺ/ĐẮT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Câu hỏi nghiên cứu:
+   "Khi PE/PB ở vùng thấp (rẻ), có nên mua không?
+    Và khi ở vùng cao (đắt), có nên bán không?"
+
+🎛️ Các tùy chọn:
+   • Ticker: Chọn cổ phiếu
+   • Valuation Metric:
+     - PE (Price-to-Earnings): Giá / Lợi nhuận
+     - PB (Price-to-Book): Giá / Giá trị sổ sách
+
+   • Forward Return Horizon: Dự đoán sau bao nhiêu ngày
+
+📊 Cách đọc:
+
+   1. Percentile Chart (Biểu đồ phần trăm):
+      • 0-20%: Vùng RẺ NHẤT (PE/PB thấp lịch sử)
+      • 20-40%: Rẻ
+      • 40-60%: Trung bình
+      • 60-80%: Đắt
+      • 80-100%: Vùng ĐẮT NHẤT (PE/PB cao lịch sử)
+
+   2. Decile Analysis (Chia thành 10 nhóm):
+      • D1: 10% ngày RẺ nhất
+      • D10: 10% ngày ĐẮT nhất
+      • Nếu D1 > D10 → Mua khi RẺ thì lợi nhuận cao hơn (hợp lý)
+      • Nếu D1 < D10 → Mua khi ĐẮT lại lời hơn (bất thường)
+
+💡 Chiến lược:
+   - PE < 20% percentile → Vùng rẻ, có thể cân nhắc MUA
+   - PE > 80% percentile → Vùng đắt, cẩn thận
+   - Kết hợp với tín hiệu khối ngoại/tự doanh để quyết định tốt hơn
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 TRANG 6: Q5 - COMPOSITE SCORE (CHIẾN LƯỢC KẾT HỢP)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 Câu hỏi nghiên cứu:
+   "Nếu kết hợp CẢ 3 tín hiệu: Khối ngoại + Tự doanh + Định giá
+    thì có kiếm được lợi nhuận tốt hơn không?"
+
+🎛️ Các tùy chọn:
+   • Ticker: Chọn cổ phiếu
+   • Holding Period: Thời gian nắm giữ (1, 5, 10, 20, 30 ngày)
+
+📊 Công thức Composite Score:
+
+   Score = Z(Foreign) + Z(Self) - Percentile(PE/PB)
+
+   Trong đó:
+   • Z(Foreign): Z-score của khối ngoại (chuẩn hóa)
+   • Z(Self): Z-score của tự doanh (chuẩn hóa)
+   • Percentile(PE/PB): Phần trăm định giá (0-1)
+
+   → Score CAO = Ngoại mua + Tự doanh mua + Giá rẻ → Tín hiệu MUA
+   → Score THẤP = Ngoại bán + Tự doanh bán + Giá đắt → Tín hiệu BÁN
+
+📊 Cách đọc Backtest Results:
+
+   1. Quintile Strategy:
+      • Q5: 20% ngày có Score CAO nhất (tín hiệu MUA mạnh)
+      • Q1: 20% ngày có Score THẤP nhất (tín hiệu BÁN mạnh)
+
+   2. Metrics quan trọng:
+      • Strategy Return (Q5 - Q1):
+        - Dương → Chiến lược HIỆU QUẢ
+        - Âm → Chiến lược KHÔNG hiệu quả
+
+      • Sharpe Ratio:
+        - > 1.0: Rất tốt
+        - 0.5 - 1.0: Tốt
+        - < 0.5: Yếu
+
+      • Win Rate:
+        - > 55%: Chiến lược tốt
+        - 50%: Như tung đồng xu
+        - < 45%: Tệ
+
+   3. CAPM Analysis:
+      • Alpha (α): Lợi nhuận vượt trội so với thị trường
+        - α > 0 → Chiến lược TẠO GIÁ TRỊ
+        - α < 0 → Không tốt hơn thị trường
+
+      • Beta (β): Độ nhạy với thị trường
+        - β > 1: Biến động mạnh hơn thị trường
+        - β < 1: Biến động thấp hơn thị trường
+
+💡 Cách sử dụng thực tế:
+   1. Xem Composite Score hiện tại của cổ phiếu
+   2. Nếu Score > 1.0 (cao) → Tín hiệu MUA
+   3. Nếu Score < -1.0 (thấp) → Tín hiệu BÁN
+   4. Xem Win Rate và Sharpe Ratio để đánh giá độ tin cậy
+
+
+================================================================================
+🔑 THUẬT NGỮ QUAN TRỌNG
+================================================================================
+
+📊 THUẬT NGỮ GIAO DỊCH:
+   • Net Buy: Khối lượng MUA RÒNG (Mua - Bán)
+   • ADV20: Average Daily Volume 20 days (Khối lượng trung bình 20 ngày)
+   • GTGD: Giá trị giao dịch
+
+📈 THUẬT NGỮ THỐNG KÊ:
+   • Quintile (Q1-Q5): Chia dữ liệu thành 5 nhóm bằng nhau (mỗi nhóm 20%)
+   • Tercile (T1-T3): Chia dữ liệu thành 3 nhóm (mỗi nhóm ~33%)
+   • Decile (D1-D10): Chia dữ liệu thành 10 nhóm (mỗi nhóm 10%)
+
+   • P-value:
+     - < 0.05: Kết quả có ý nghĩa thống kê (TIN ĐƯỢC)
+     - < 0.01: Rất có ý nghĩa
+     - > 0.05: Không có ý nghĩa (có thể do ngẫu nhiên)
+
+   • Z-score: Chuẩn hóa dữ liệu (mean = 0, std = 1)
+     - Z > 2: Cao bất thường
+     - -2 < Z < 2: Bình thường
+     - Z < -2: Thấp bất thường
+
+   • Information Coefficient (IC): Tương quan giữa tín hiệu và lợi nhuận
+     - |IC| > 0.10: Tín hiệu rất mạnh
+     - |IC| > 0.05: Tín hiệu mạnh
+     - |IC| < 0.02: Tín hiệu yếu
+
+💰 THUẬT NGỮ ĐỊNH GIÁ:
+   • PE (Price-to-Earnings): Giá / Lợi nhuận
+     - PE cao = Đắt
+     - PE thấp = Rẻ
+
+   • PB (Price-to-Book): Giá / Giá trị sổ sách
+     - PB > 2: Đắt
+     - PB < 1: Rẻ
+
+   • Percentile: Phần trăm vị trí trong lịch sử
+     - 90th percentile PE = PE hiện tại cao hơn 90% lịch sử (Đắt)
+     - 10th percentile PE = PE hiện tại thấp hơn 90% lịch sử (Rẻ)
+
+📊 THUẬT NGỮ BACKTEST:
+   • Sharpe Ratio: (Return - Risk-free rate) / Volatility
+     - Đo lường lợi nhuận trên mỗi đơn vị rủi ro
+
+   • Win Rate: Tỷ lệ thắng (số lần lời / tổng số lần)
+
+   • Max Drawdown: Mức lỗ tối đa từ đỉnh đến đáy
+
+   • Alpha (α): Lợi nhuận vượt trội so với thị trường
+
+   • Beta (β): Độ nhạy cảm với thị trường
+
+
+================================================================================
+💡 MẸO SỬ DỤNG HIỆU QUẢ
+================================================================================
+
+1. BẮT ĐẦU TỪ OVERVIEW
+   → Hiểu tổng quan dữ liệu trước khi đào sâu
+
+2. XEM Q1 VÀ Q4 TRƯỚC
+   → Hai trang này có dữ liệu dài nhất (5+ năm), đáng tin nhất
+
+3. KIỂM TRA P-VALUE
+   → Chỉ tin những kết quả có p < 0.05
+
+4. KẾT HỢP NHIỀU TÍN HIỆU
+   → Không nên chỉ dựa vào 1 tín hiệu đơn lẻ
+   → Xem Q5 để hiểu cách kết hợp
+
+5. CHÚ Ý THỜI GIAN NẮM GIỮ
+   → T+1 đến T+5: Ngắn hạn (day trading, swing trading)
+   → T+10 đến T+30: Trung hạn (position trading)
+
+6. SO SÁNH GIỮA CÁC TICKER
+   → HPG, HSG, NKG có hành vi khác nhau
+   → Tín hiệu hiệu quả với HPG chưa chắc hiệu quả với NKG
+
+
+================================================================================
+❌ SAI LẦM THƯỜNG GẶP KHI SỬ DỤNG
+================================================================================
+
+Tránh những sai lầm này để phân tích chính xác:
+
+1. ❌ KHÔNG KIỂM TRA P-VALUE
+   → Sai lầm: Nhìn thấy Q5 > Q1 là tin ngay
+   → Đúng: Phải kiểm tra p-value < 0.05 mới tin được
+   → Nếu p > 0.05 = Kết quả có thể do NGẪU NHIÊN
+
+2. ❌ CHỈ NHÌN MỘT TÍN HIỆU DUY NHẤT
+   → Sai lầm: Chỉ dựa vào khối ngoại hoặc chỉ dựa vào PE/PB
+   → Đúng: Kết hợp nhiều tín hiệu (Q1 + Q2 + Q4)
+   → Xem Q5 để hiểu cách kết hợp đúng
+
+3. ❌ BỎ QUA CẢNH BÁO VỀ DỮ LIỆU TỰ DOANH
+   → Sai lầm: Tin kết quả Q2, Q3, Q5 như tin Q1
+   → Đúng: Nhớ rằng dữ liệu tự doanh chỉ có 3 năm (2022-2025)
+   → Q2, Q3, Q5 ít dữ liệu hơn → kết quả yếu hơn
+
+4. ❌ KHÔNG HIỂU QUINTILE/TERCILE/DECILE
+   → Sai lầm: Nghĩ Q5 = ngày thứ 5, Q1 = ngày thứ 1
+   → Đúng: Q5 = 20% ngày có tín hiệu MẠNH nhất
+           Q1 = 20% ngày có tín hiệu YẾU nhất
+
+5. ❌ DÙNG KẾT QUẢ BACKTEST LÀM LỜI KHUYÊN ĐẦU TƯ
+   → Sai lầm: "Q5 có Sharpe 1.5 → Tôi mua HPG ngay!"
+   → Đúng: Backtest chỉ là LỊCH SỬ, không đảm bảo tương lai
+   → Đây là NGHIÊN CỨU, không phải khuyến nghị đầu tư
+
+6. ❌ QUÊN TÍNH PHÍ GIAO DỊCH
+   → Sai lầm: Strategy Return = 5%/tháng → Nghĩ sẽ lời 5%
+   → Đúng: Thực tế lời ít hơn do phí giao dịch, thuế, slippage
+
+7. ❌ KHÔNG ĐỌC PHẦN "LƯU Ý QUAN TRỌNG"
+   → Sai lầm: Bỏ qua disclaimer và cảnh báo rủi ro
+   → Đúng: ĐỌC KỸ phần cảnh báo trước khi quyết định
+
+8. ❌ SO SÁNH SAI THỜI GIAN NẮM GIỮ
+   → Sai lầm: T+1 lời → Nghĩ T+30 cũng lời
+   → Đúng: Mỗi holding period khác nhau, phải xem riêng
+
+💡 NHỚ: Luôn KIỂM TRA, PHÂN TÍCH, và TỰ QUYẾT ĐỊNH!
+
+
+================================================================================
+⚠️ LƯU Ý QUAN TRỌNG
+================================================================================
+
+1. ĐÂY LÀ NGHIÊN CỨU, KHÔNG PHẢI TƯ VẤN ĐẦU TƯ
+   → Kết quả quá khứ KHÔNG đảm bảo tương lai
+   → Chỉ sử dụng làm tham khảo, tự chịu trách nhiệm quyết định
+
+2. DỮ LIỆU TỰ DOANH BỊ HẠN CHẾ
+   → Chỉ có 3 năm (2022-2025)
+   → Q2, Q3, Q5 có thể thiếu sức mạnh thống kê
+
+3. THỊ TRƯỜNG THAY ĐỔI
+   → Tín hiệu hiệu quả trong quá khứ có thể không hiệu quả trong tương lai
+   → Luôn cập nhật và theo dõi
+
+4. RỦI RO
+   → Đầu tư chứng khoán có rủi ro
+   → Chỉ đầu tư số tiền có thể chấp nhận mất
+   → Đa dạng hóa danh mục
+
+
+================================================================================
+❓ CÂU HỎI THƯỜNG GẶP
+================================================================================
+
+Q: Tại sao một số biểu đồ không hiển thị đủ dữ liệu?
+A: Do dữ liệu tự doanh chỉ có từ 2022-11. Các phân tích liên quan đến
+   tự doanh (Q2, Q3, Q5) sẽ có ít dữ liệu hơn Q1 và Q4.
+
+Q: P-value > 0.05 nghĩa là sao?
+A: Nghĩa là kết quả không có ý nghĩa thống kê, có thể do ngẫu nhiên.
+   Không nên dựa vào tín hiệu này để đầu tư.
+
+Q: Nên tin Sharpe Ratio hay Win Rate?
+A: Cả hai đều quan trọng. Sharpe Ratio đo lường rủi ro, Win Rate đo tỷ lệ thắng.
+   Tốt nhất là Sharpe > 1.0 VÀ Win Rate > 55%.
+
+Q: Tại sao Q5 có kết quả âm?
+A: Có thể chiến lược kết hợp không hiệu quả với ticker đó, hoặc dữ liệu quá ngắn.
+   Hãy xem từng tín hiệu riêng lẻ (Q1, Q2, Q4) để hiểu rõ hơn.
+
+Q: Có thể sử dụng để giao dịch thực tế không?
+A: Platform này chỉ là NGHIÊN CỨU. Nếu muốn giao dịch thực, cần:
+   - Backtest thêm với dữ liệu mới
+   - Tính phí giao dịch
+   - Quản lý rủi ro chặt chẽ
+   - Tự chịu trách nhiệm
+
+
+================================================================================
+📞 LIÊN HỆ VÀ GÓP Ý
+================================================================================
+
+Nếu có câu hỏi hoặc phát hiện lỗi, vui lòng liên hệ qua:
+• GitHub: https://github.com/luanvd1704/steel-flow-analysis
+• Email: [Thêm email nếu muốn]
+
+
+================================================================================
+© 2025 Steel Flow Analysis Platform
+Phiên bản 1.0 - Cập nhật lần cuối: Tháng 12/2025
+================================================================================
