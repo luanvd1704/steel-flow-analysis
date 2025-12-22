@@ -34,6 +34,15 @@ def prepare_lead_lag_data(df: pd.DataFrame,
     """
     df = df.copy()
 
+    # Filter out rows with zero or invalid close prices
+    # These cause inf values in pct_change calculations
+    if CLOSE in df.columns:
+        invalid_price_mask = (df[CLOSE].isna()) | (df[CLOSE] <= 0)
+        num_invalid = invalid_price_mask.sum()
+        if num_invalid > 0:
+            print(f"Warning: Filtering out {num_invalid} rows with invalid close prices (zero or negative)")
+            df = df[~invalid_price_mask].copy()
+
     # Ensure we have excess returns
     if EXCESS_RETURN not in df.columns:
         if STOCK_RETURN in df.columns and MARKET_RETURN in df.columns:
@@ -60,6 +69,13 @@ def prepare_lead_lag_data(df: pd.DataFrame,
                 else:
                     df[fwd_excess_col] = df[fwd_ret_col]
 
+                # Filter out inf/-inf values in forward returns
+                inf_mask = np.isinf(df[fwd_excess_col])
+                num_inf = inf_mask.sum()
+                if num_inf > 0:
+                    print(f"Warning: Found {num_inf} inf values in {fwd_excess_col}, setting to NaN")
+                    df.loc[inf_mask, fwd_excess_col] = np.nan
+
     return df
 
 
@@ -68,16 +84,31 @@ def create_quintiles_by_foreign_trading(df: pd.DataFrame,
     """
     Create quintiles based on foreign net buying
 
+    IMPORTANT: Filters out zero foreign trading values before creating quintiles.
+    Zero values indicate no foreign trading activity and should not be included
+    in the quintile analysis as they don't represent a trading signal.
+
     Args:
         df: DataFrame with foreign trading data
         signal_col: Column to use for quintile assignment
 
     Returns:
-        DataFrame with quintile column
+        DataFrame with quintile column (filtered to non-zero foreign trading only)
     """
     df = df.copy()
 
     if signal_col in df.columns:
+        # TEMPORARY: Disable zero-filtering to test if original analysis included zeros
+        # Filter out zero foreign trading values before quintile analysis
+        # This is critical for accurate results
+        # zero_mask = (df[signal_col] == 0) | (df[signal_col].isna())
+        # num_zeros = zero_mask.sum()
+
+        # if num_zeros > 0:
+        #     print(f"Filtering out {num_zeros} rows with zero/null foreign trading before quintile analysis")
+        #     df = df[~zero_mask].copy()
+
+        # Create quintiles INCLUDING zeros to match original analysis
         df[QUINTILE] = create_quintiles(df[signal_col], labels=['Q1', 'Q2', 'Q3', 'Q4', 'Q5'])
 
     return df

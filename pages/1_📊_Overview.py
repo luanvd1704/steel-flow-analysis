@@ -13,7 +13,8 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data.loader import merge_all_data, get_data_summary
-from config.config import TICKERS, CACHE_TTL
+from config import config_banking
+from config.config import CACHE_TTL
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
 
@@ -27,7 +28,7 @@ st.title("📊 Tổng Quan Dữ Liệu")
 # Load data with caching
 @st.cache_data(ttl=CACHE_TTL)
 def load_all_data():
-    return merge_all_data()
+    return merge_all_data(config_banking)
 
 @st.cache_data(ttl=CACHE_TTL)
 def get_summary(data):

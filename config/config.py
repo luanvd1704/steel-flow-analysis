@@ -1,26 +1,39 @@
 """
-Configuration file for Steel Flow Analysis Platform
-Contains paths, tickers, and analysis parameters
+Configuration file for Multi-Sector Flow Analysis Platform
+Contains common analysis parameters shared across all sectors
+For sector-specific configs, see config_steel.py and config_banking.py
 """
 import os
+from typing import Any
 
 # ============================================
-# TICKERS
+# SECTOR CONFIGURATION LOADER
 # ============================================
-TICKERS = ['HPG', 'HSG', 'NKG']
+def get_sector_config(sector: str = 'steel'):
+    """
+    Load sector-specific configuration
+
+    Args:
+        sector: 'steel' or 'banking'
+
+    Returns:
+        Module object with sector-specific configuration
+    """
+    if sector.lower() == 'steel':
+        from config import config_steel
+        return config_steel
+    elif sector.lower() == 'banking':
+        from config import config_banking
+        return config_banking
+    else:
+        raise ValueError(f"Unknown sector: {sector}. Choose 'steel' or 'banking'")
+
 
 # ============================================
-# FILE PATHS
+# COMMON PATHS (kept for backward compatibility)
 # ============================================
 # Base directory (root of steel-flow-analysis)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DATA_DIR = os.path.join(BASE_DIR, 'Stock-analyst')
-
-# Data files
-FOREIGN_TRADING_FILE = os.path.join(DATA_DIR, 'steel_foreign_trading.xlsx')
-SELF_TRADING_FILE = os.path.join(DATA_DIR, 'steel_self_trading.xlsx')
-VALUATION_FILE = os.path.join(DATA_DIR, 'steel_valuation.xlsx')
-VNINDEX_FILE = os.path.join(DATA_DIR, 'vnindex_market.xlsx')
 
 # ============================================
 # ANALYSIS PARAMETERS
@@ -84,23 +97,16 @@ MAX_MISSING_PCT = 0.5  # 50%
 MIN_DATA_POINTS = 100
 
 # ============================================
-# STREAMLIT CONFIG
+# STREAMLIT CONFIG (Common across sectors)
 # ============================================
-PAGE_TITLE = "Steel Flow Analysis"
-PAGE_ICON = "📊"
 LAYOUT = "wide"
 
 # Cache TTL (Time To Live) in seconds
 CACHE_TTL = 3600  # 1 hour
 
 # ============================================
-# WARNINGS AND DISCLAIMERS
+# COMMON WARNINGS AND DISCLAIMERS
 # ============================================
-SELF_TRADING_WARNING = """
-⚠️ **Lưu ý về dữ liệu Tự Doanh**: Dữ liệu chỉ có từ 2022-11 trở đi (3 năm).
-Các phân tích liên quan đến tự doanh có thể thiếu sức mạnh thống kê.
-"""
-
 BACKTEST_DISCLAIMER = """
 ⚠️ **Disclaimer**: Kết quả backtest là phân tích lịch sử và không đảm bảo hiệu suất tương lai.
 Không nên sử dụng làm khuyến nghị đầu tư.

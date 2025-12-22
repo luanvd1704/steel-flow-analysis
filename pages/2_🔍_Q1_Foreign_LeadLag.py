@@ -13,9 +13,23 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from data.loader import merge_all_data
 from analysis.lead_lag import lead_lag_analysis_full, find_optimal_normalization_window
-from config.config import TICKERS, FORWARD_RETURN_HORIZONS, CACHE_TTL, QUINTILE_COLORS
+from config.config import get_sector_config, FORWARD_RETURN_HORIZONS, CACHE_TTL, QUINTILE_COLORS
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
+
+# Filtered bank tickers based on comprehensive quintile analysis across 6 timeframes
+# Only banks with statistical significance (p-value <= 0.05, positive spread)
+# Analysis: Tested T+1, T+3, T+5, T+10, T+20, T+30 horizons
+# Note: Zero values INCLUDED in quintile analysis (not filtered)
+# Updated: 2025-12-22 after fixing inf/-inf bug and re-analyzing with current data
+FILTERED_BANKING_TICKERS = [
+    'ACB',  # Significant at T+5 (p=0.045, spread=0.010)
+    'OCB',  # Significant at T+30 (p=0.005, spread=0.023)
+    'VPB',  # Significant at T+20 (p=0.003) and T+30 (p=0.004)
+]
+
+# Get banking config
+config_banking = get_sector_config('banking')
 
 st.set_page_config(page_title="Q1: Dẫn/Trễ NDTNN", page_icon="🔍", layout="wide")
 
@@ -23,6 +37,24 @@ st.set_page_config(page_title="Q1: Dẫn/Trễ NDTNN", page_icon="🔍", layout=
 display_sidebar_logo()
 
 st.title("🔍 Q1: Phân Tích Dẫn/Trễ Nhà Đầu Tư Nước Ngoài")
+
+st.info("""
+📊 **Lưu ý**: Tab này chỉ hiển thị 3 mã ngân hàng có dữ liệu khối ngoại có sức dự đoán có ý nghĩa thống kê.
+
+**Tiêu chí lọc:**
+- Quintile analysis trên 6 khung thời gian (T+1, T+3, T+5, T+10, T+20, T+30)
+- P-value ≤ 0.05 (độ tin cậy ≥ 95%)
+- Spread dương (Q5 > Q1)
+
+**3 mã đạt chuẩn:**
+- **VPB**: Mạnh nhất - 2/6 horizons có ý nghĩa (T+20, T+30)
+- **OCB**: 1/6 horizon có ý nghĩa (T+30)
+- **ACB**: 1/6 horizon có ý nghĩa (T+5)
+
+**14 mã không đạt:** VCB, TCB, MBB, BID, CTG, STB, HDB, TPB, VIB, SHB, SSB, MSB, LPB, EIB
+
+*Cập nhật: 22/12/2025 - Đã fix lỗi inf/-inf và phân tích lại với dữ liệu hiện tại*
+""")
 
 st.markdown("""
 **Câu Hỏi Nghiên Cứu**: Nhà đầu tư nước ngoài có dự đoán được lợi nhuận tương lai không?
@@ -33,14 +65,14 @@ Phân tích này xem xét liệu mua ròng của nhà đầu tư nước ngoài 
 # Load data
 @st.cache_data(ttl=CACHE_TTL)
 def load_all_data():
-    return merge_all_data()
+    return merge_all_data(config_banking, tickers=FILTERED_BANKING_TICKERS)
 
 with st.spinner("Đang tải dữ liệu..."):
     data = load_all_data()
 
 # Sidebar filters
 st.sidebar.header("Bộ Lọc")
-selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
+selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", FILTERED_BANKING_TICKERS)
 selected_horizon = st.sidebar.selectbox(
     "Kỳ Hạn Lợi Nhuận",
     FORWARD_RETURN_HORIZONS,

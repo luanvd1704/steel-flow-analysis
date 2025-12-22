@@ -60,8 +60,15 @@ def analyze_percentile_returns(df: pd.DataFrame,
     # Prepare data
     df = df.copy()
 
-    # Ensure forward returns exist
+    # Filter out invalid close prices (zero or negative) to prevent inf values
     if CLOSE in df.columns:
+        invalid_price_mask = (df[CLOSE].isna()) | (df[CLOSE] <= 0)
+        num_invalid = invalid_price_mask.sum()
+        if num_invalid > 0:
+            print(f"Warning: Filtering out {num_invalid} rows with invalid close prices in valuation analysis")
+            df = df[~invalid_price_mask].copy()
+
+        # Calculate forward returns
         fwd_returns = calculate_forward_returns(df[CLOSE], [horizon])
         df = pd.concat([df, fwd_returns], axis=1)
 
@@ -69,6 +76,14 @@ def analyze_percentile_returns(df: pd.DataFrame,
 
     if percentile_col not in df.columns or fwd_ret_col not in df.columns:
         return {'error': f'Missing required columns'}
+
+    # Replace any inf values with NaN
+    if fwd_ret_col in df.columns:
+        inf_mask = np.isinf(df[fwd_ret_col])
+        num_inf = inf_mask.sum()
+        if num_inf > 0:
+            print(f"Warning: Found {num_inf} inf values in {fwd_ret_col}, replacing with NaN")
+            df.loc[inf_mask, fwd_ret_col] = np.nan
 
     # Create deciles based on percentile
     valid_data = df[[percentile_col, fwd_ret_col]].dropna()

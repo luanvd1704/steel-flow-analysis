@@ -9,7 +9,8 @@ import os
 # Add current directory to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from config.config import PAGE_TITLE, PAGE_ICON, LAYOUT
+from config.config_steel import PAGE_TITLE, PAGE_ICON
+from config.config import LAYOUT
 
 st.set_page_config(
     page_title=PAGE_TITLE,

@@ -1,42 +1,46 @@
 """
 Data loader module
 Loads and merges data from Excel files
+Refactored to support multi-sector architecture
 """
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import os
 import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from config.config import (
-    TICKERS, FOREIGN_TRADING_FILE, SELF_TRADING_FILE,
-    VALUATION_FILE, VNINDEX_FILE, MA_WINDOW_REGIME
-)
+from config.config import MA_WINDOW_REGIME
 from utils.constants import *
 from utils.date_utils import standardize_date_column
 
 
-def load_foreign_trading() -> Dict[str, pd.DataFrame]:
+def load_foreign_trading(sector_config: Any) -> Dict[str, pd.DataFrame]:
     """
     Load foreign trading data from Excel
+
+    Args:
+        sector_config: Sector configuration module (config_steel or config_banking)
 
     Returns:
         Dictionary mapping ticker to DataFrame
     """
-    if not os.path.exists(FOREIGN_TRADING_FILE):
-        raise FileNotFoundError(f"Foreign trading file not found: {FOREIGN_TRADING_FILE}")
+    foreign_file = sector_config.FOREIGN_TRADING_FILE
+    tickers = sector_config.TICKERS
+
+    if not os.path.exists(foreign_file):
+        raise FileNotFoundError(f"Foreign trading file not found: {foreign_file}")
 
     # Read Excel file with all sheets
-    excel_file = pd.ExcelFile(FOREIGN_TRADING_FILE)
+    excel_file = pd.ExcelFile(foreign_file)
 
     data_dict = {}
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         if ticker in excel_file.sheet_names:
-            df = pd.read_excel(FOREIGN_TRADING_FILE, sheet_name=ticker)
+            df = pd.read_excel(foreign_file, sheet_name=ticker)
 
             # Column mapping from Vietnamese to English
             column_map = {
@@ -83,23 +87,29 @@ def load_foreign_trading() -> Dict[str, pd.DataFrame]:
     return data_dict
 
 
-def load_self_trading() -> Dict[str, pd.DataFrame]:
+def load_self_trading(sector_config: Any) -> Dict[str, pd.DataFrame]:
     """
     Load self-trading (proprietary) data from Excel
+
+    Args:
+        sector_config: Sector configuration module
 
     Returns:
         Dictionary mapping ticker to DataFrame
     """
-    if not os.path.exists(SELF_TRADING_FILE):
-        raise FileNotFoundError(f"Self-trading file not found: {SELF_TRADING_FILE}")
+    self_file = sector_config.SELF_TRADING_FILE
+    tickers = sector_config.TICKERS
 
-    excel_file = pd.ExcelFile(SELF_TRADING_FILE)
+    if not os.path.exists(self_file):
+        raise FileNotFoundError(f"Self-trading file not found: {self_file}")
+
+    excel_file = pd.ExcelFile(self_file)
 
     data_dict = {}
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         if ticker in excel_file.sheet_names:
-            df = pd.read_excel(SELF_TRADING_FILE, sheet_name=ticker)
+            df = pd.read_excel(self_file, sheet_name=ticker)
 
             # Column mapping
             column_map = {
@@ -149,23 +159,29 @@ def load_self_trading() -> Dict[str, pd.DataFrame]:
     return data_dict
 
 
-def load_valuation() -> Dict[str, pd.DataFrame]:
+def load_valuation(sector_config: Any) -> Dict[str, pd.DataFrame]:
     """
     Load valuation data (PE, PB, PCFS) from Excel
+
+    Args:
+        sector_config: Sector configuration module
 
     Returns:
         Dictionary mapping ticker to DataFrame
     """
-    if not os.path.exists(VALUATION_FILE):
-        raise FileNotFoundError(f"Valuation file not found: {VALUATION_FILE}")
+    val_file = sector_config.VALUATION_FILE
+    tickers = sector_config.TICKERS
 
-    excel_file = pd.ExcelFile(VALUATION_FILE)
+    if not os.path.exists(val_file):
+        raise FileNotFoundError(f"Valuation file not found: {val_file}")
+
+    excel_file = pd.ExcelFile(val_file)
 
     data_dict = {}
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         if ticker in excel_file.sheet_names:
-            df = pd.read_excel(VALUATION_FILE, sheet_name=ticker)
+            df = pd.read_excel(val_file, sheet_name=ticker)
 
             # Standardize column names
             df.columns = df.columns.str.lower().str.strip()
@@ -195,17 +211,22 @@ def load_valuation() -> Dict[str, pd.DataFrame]:
     return data_dict
 
 
-def load_vnindex() -> pd.DataFrame:
+def load_vnindex(sector_config: Any) -> pd.DataFrame:
     """
     Load VN-Index market data from Excel
+
+    Args:
+        sector_config: Sector configuration module
 
     Returns:
         DataFrame with VN-Index data
     """
-    if not os.path.exists(VNINDEX_FILE):
-        raise FileNotFoundError(f"VN-Index file not found: {VNINDEX_FILE}")
+    vnindex_file = sector_config.VNINDEX_FILE
 
-    df = pd.read_excel(VNINDEX_FILE)
+    if not os.path.exists(vnindex_file):
+        raise FileNotFoundError(f"VN-Index file not found: {vnindex_file}")
+
+    df = pd.read_excel(vnindex_file)
 
     # Standardize column names
     df.columns = df.columns.str.lower().str.strip()
@@ -228,7 +249,7 @@ def load_vnindex() -> pd.DataFrame:
     return df
 
 
-def merge_all_data(tickers: Optional[List[str]] = None) -> Dict[str, pd.DataFrame]:
+def merge_all_data(sector_config: Any, tickers: Optional[List[str]] = None) -> Dict[str, pd.DataFrame]:
     """
     Load and merge all data sources for each ticker
 
@@ -238,19 +259,20 @@ def merge_all_data(tickers: Optional[List[str]] = None) -> Dict[str, pd.DataFram
     - Leave trading data as NaN where missing
 
     Args:
-        tickers: List of tickers to load (default: all tickers from config)
+        sector_config: Sector configuration module (config_steel or config_banking)
+        tickers: List of tickers to load (default: all tickers from sector config)
 
     Returns:
         Dictionary mapping ticker to merged DataFrame
     """
     if tickers is None:
-        tickers = TICKERS
+        tickers = sector_config.TICKERS
 
     print("Loading data files...")
-    foreign_data = load_foreign_trading()
-    self_data = load_self_trading()
-    valuation_data = load_valuation()
-    vnindex_data = load_vnindex()
+    foreign_data = load_foreign_trading(sector_config)
+    self_data = load_self_trading(sector_config)
+    valuation_data = load_valuation(sector_config)
+    vnindex_data = load_vnindex(sector_config)
 
     print("Merging data...")
     merged_data = {}
@@ -344,9 +366,12 @@ def get_data_summary(merged_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    # Test data loading
+    # Test data loading with steel config
+    from config.config import get_sector_config
+
     print("Testing data loader...")
-    data = merge_all_data()
+    sector_config = get_sector_config('steel')  # Test with steel by default
+    data = merge_all_data(sector_config)
     summary = get_data_summary(data)
     print("\n" + "="*80)
     print("DATA SUMMARY")
