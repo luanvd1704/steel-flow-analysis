@@ -19,13 +19,15 @@ from utils.logo_helper import display_sidebar_logo
 
 # Filtered bank tickers based on comprehensive quintile analysis across 6 timeframes
 # Only banks with statistical significance (p-value <= 0.05, positive spread)
-# Analysis: Tested T+1, T+3, T+5, T+10, T+20, T+30 horizons
+# Analysis: Tested T+1, T+3, T+5, T+10, T+20, T+30 horizons with 6-year data (2019-2025)
 # Note: Zero values INCLUDED in quintile analysis (not filtered)
-# Updated: 2025-12-22 after fixing inf/-inf bug and re-analyzing with current data
+# Updated: 2025-12-23 with 6-year data analysis results
 FILTERED_BANKING_TICKERS = [
-    'ACB',  # Significant at T+5 (p=0.045, spread=0.010)
-    'OCB',  # Significant at T+30 (p=0.005, spread=0.023)
-    'VPB',  # Significant at T+20 (p=0.003) and T+30 (p=0.004)
+    'OCB',  # 2/6 horizons - STRONGEST (p_min=0.0016, spread_max=3.15%)
+    'VPB',  # 2/6 horizons - VERY STRONG (p_min=0.0033, spread_max=3.13%)
+    'ACB',  # 2/6 horizons - MODERATE (p_min=0.0262, spread_max=1.40%)
+    'SSB',  # 2/6 horizons - MARGINAL (p_min=0.0300, spread_max=1.53%)
+    'EIB',  # 1/6 horizon - MODERATE (p_min=0.0155, spread_max=1.54%)
 ]
 
 # Get banking config
@@ -39,21 +41,24 @@ display_sidebar_logo()
 st.title("🔍 Q1: Phân Tích Dẫn/Trễ Nhà Đầu Tư Nước Ngoài")
 
 st.info("""
-📊 **Lưu ý**: Tab này chỉ hiển thị 3 mã ngân hàng có dữ liệu khối ngoại có sức dự đoán có ý nghĩa thống kê.
+📊 **Lưu ý**: Tab này hiển thị 5 mã ngân hàng có dữ liệu khối ngoại có sức dự đoán có ý nghĩa thống kê.
 
 **Tiêu chí lọc:**
+- Dữ liệu: 6 năm (2019-2025) - match với date range của foreign trading data
 - Quintile analysis trên 6 khung thời gian (T+1, T+3, T+5, T+10, T+20, T+30)
 - P-value ≤ 0.05 (độ tin cậy ≥ 95%)
 - Spread dương (Q5 > Q1)
 
-**3 mã đạt chuẩn:**
-- **VPB**: Mạnh nhất - 2/6 horizons có ý nghĩa (T+20, T+30)
-- **OCB**: 1/6 horizon có ý nghĩa (T+30)
-- **ACB**: 1/6 horizon có ý nghĩa (T+5)
+**5 mã đạt chuẩn (xếp theo độ mạnh):**
+1. **OCB**: MẠNH NHẤT - 2/6 horizons (p_min=0.0016, spread=3.15%)
+2. **VPB**: RẤT MẠNH - 2/6 horizons (p_min=0.0033, spread=3.13%)
+3. **ACB**: TRUNG BÌNH - 2/6 horizons (p_min=0.0262, spread=1.40%)
+4. **SSB**: YẾU - 2/6 horizons (p_min=0.0300, spread=1.53%)
+5. **EIB**: TRUNG BÌNH - 1/6 horizon (p_min=0.0155, spread=1.54%)
 
-**14 mã không đạt:** VCB, TCB, MBB, BID, CTG, STB, HDB, TPB, VIB, SHB, SSB, MSB, LPB, EIB
+**12 mã không đạt:** VCB, TCB, MBB, BID, CTG, STB, HDB, TPB, VIB, SHB, MSB, LPB
 
-*Cập nhật: 22/12/2025 - Đã fix lỗi inf/-inf và phân tích lại với dữ liệu hiện tại*
+*Cập nhật: 23/12/2025 - Phân tích lại với dữ liệu 6 năm (2019-2025)*
 """)
 
 st.markdown("""

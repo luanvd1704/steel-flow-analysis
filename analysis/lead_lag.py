@@ -190,13 +190,13 @@ def lead_lag_analysis_full(df: pd.DataFrame,
     results = {}
 
     for horizon in horizons:
-        # Analyze with excess returns
-        results[f'T+{horizon}'] = analyze_quintile_returns(df, horizon, use_excess_return=True)
+        # Analyze with raw returns (not excess returns)
+        results[f'T+{horizon}'] = analyze_quintile_returns(df, horizon, use_excess_return=False)
 
     # Calculate Information Coefficient for each horizon
     ic_results = {}
     for horizon in horizons:
-        fwd_ret_col = f'fwd_excess_return_{horizon}d'
+        fwd_ret_col = f'fwd_return_{horizon}d'  # Use raw returns, not excess
         if signal_col in df.columns and fwd_ret_col in df.columns:
             ic_results[f'T+{horizon}'] = calculate_information_coefficient(
                 df[signal_col],
