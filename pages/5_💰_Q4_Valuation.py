@@ -18,17 +18,10 @@ from visualization.charts_q4 import (
     create_percentile_timeseries, create_decile_returns_chart,
     create_valuation_gauge, create_zone_comparison_chart
 )
-from config import config_banking
+from config import config_steel
 from config.config import CACHE_TTL
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
-
-# All 17 banking tickers (Valuation analysis doesn't require foreign trading data)
-BANKING_TICKERS = [
-    'VCB', 'TCB', 'MBB', 'ACB', 'VPB', 'BID', 'CTG',
-    'STB', 'HDB', 'TPB', 'VIB', 'SSB', 'SHB', 'MSB',
-    'LPB', 'OCB', 'EIB'
-]
 
 st.set_page_config(page_title="Q4: Định Giá", page_icon="💰", layout="wide")
 
@@ -46,7 +39,7 @@ Phân tích này xem xét liệu mua cổ phiếu khi chúng rẻ về mặt l�
 # Load data
 @st.cache_data(ttl=CACHE_TTL)
 def load_all_data():
-    return merge_all_data(config_banking)
+    return merge_all_data(config_steel)
 
 @st.cache_data(ttl=CACHE_TTL)
 def prepare_valuation_data(ticker):
@@ -58,7 +51,7 @@ def prepare_valuation_data(ticker):
 
 # Sidebar
 st.sidebar.header("Bộ Lọc")
-selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", BANKING_TICKERS)
+selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
 selected_metric = st.sidebar.selectbox("Chỉ Số Định Giá", [PE, PB, PCFS])
 forward_horizon = st.sidebar.slider("Kỳ Hạn Lợi Nhuận (ngày)", 1, 60, 30)
 
@@ -260,132 +253,6 @@ if comparison:
     - **Chênh Lệch Rẻ-Đắt Dương**: Rẻ vượt trội hơn đắt (tốt)
     - **P-value Thấp**: Mô hình có ý nghĩa thống kê
     """)
-
-# Current PE/PB comparison across all banks
-st.header("So Sánh PE/PB Hiện Tại - Tất Cả 17 Ngân Hàng")
-
-st.markdown("""
-Biểu đồ dưới đây hiển thị PE và PB hiện tại của tất cả 17 ngân hàng, sắp xếp theo thứ tự giảm dần.
-""")
-
-@st.cache_data(ttl=CACHE_TTL)
-def get_all_banks_current_valuation():
-    """Get current PE and PB for all banks"""
-    data = load_all_data()
-
-    results = []
-    for ticker in BANKING_TICKERS:
-        if ticker in data:
-            df = data[ticker]
-            if not df.empty:
-                # Get most recent data
-                latest = df.iloc[-1]
-
-                pe_val = latest.get(PE, None)
-                pb_val = latest.get(PB, None)
-                date_val = latest.get(DATE, None)
-
-                results.append({
-                    'Ticker': ticker,
-                    'PE': pe_val if not pd.isna(pe_val) else None,
-                    'PB': pb_val if not pd.isna(pb_val) else None,
-                    'Date': date_val
-                })
-
-    return pd.DataFrame(results)
-
-with st.spinner("Đang tải dữ liệu định giá tất cả ngân hàng..."):
-    all_banks_df = get_all_banks_current_valuation()
-
-# Filter out None values and sort
-pe_data = all_banks_df[all_banks_df['PE'].notna()].sort_values('PE', ascending=False)
-pb_data = all_banks_df[all_banks_df['PB'].notna()].sort_values('PB', ascending=False)
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("PE Theo Thứ Tự Giảm Dần")
-
-    if not pe_data.empty:
-        import plotly.graph_objects as go
-
-        fig_pe = go.Figure()
-
-        fig_pe.add_trace(go.Bar(
-            x=pe_data['Ticker'],
-            y=pe_data['PE'],
-            marker_color='steelblue',
-            text=pe_data['PE'].apply(lambda x: f'{x:.2f}'),
-            textposition='outside'
-        ))
-
-        fig_pe.update_layout(
-            title='PE Hiện Tại - 17 Ngân Hàng',
-            xaxis_title='Mã Cổ Phiếu',
-            yaxis_title='PE',
-            height=500,
-            template='plotly_white',
-            showlegend=False
-        )
-
-        st.plotly_chart(fig_pe, use_container_width=True)
-
-        # Show latest date
-        latest_date = pe_data['Date'].iloc[0]
-        st.caption(f"Dữ liệu mới nhất: {str(latest_date)[:10] if latest_date else 'N/A'}")
-    else:
-        st.warning("Không có dữ liệu PE")
-
-with col2:
-    st.subheader("PB Theo Thứ Tự Giảm Dần")
-
-    if not pb_data.empty:
-        fig_pb = go.Figure()
-
-        fig_pb.add_trace(go.Bar(
-            x=pb_data['Ticker'],
-            y=pb_data['PB'],
-            marker_color='coral',
-            text=pb_data['PB'].apply(lambda x: f'{x:.2f}'),
-            textposition='outside'
-        ))
-
-        fig_pb.update_layout(
-            title='PB Hiện Tại - 17 Ngân Hàng',
-            xaxis_title='Mã Cổ Phiếu',
-            yaxis_title='PB',
-            height=500,
-            template='plotly_white',
-            showlegend=False
-        )
-
-        st.plotly_chart(fig_pb, use_container_width=True)
-
-        # Show latest date
-        latest_date = pb_data['Date'].iloc[0]
-        st.caption(f"Dữ liệu mới nhất: {str(latest_date)[:10] if latest_date else 'N/A'}")
-    else:
-        st.warning("Không có dữ liệu PB")
-
-# Summary statistics
-st.subheader("Thống Kê Tổng Hợp")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if not pe_data.empty:
-        st.metric("PE Trung Bình", f"{pe_data['PE'].mean():.2f}")
-        st.metric("PE Trung Vị", f"{pe_data['PE'].median():.2f}")
-
-with col2:
-    if not pb_data.empty:
-        st.metric("PB Trung Bình", f"{pb_data['PB'].mean():.2f}")
-        st.metric("PB Trung Vị", f"{pb_data['PB'].median():.2f}")
-
-with col3:
-    if not pe_data.empty and not pb_data.empty:
-        st.metric("Số Ngân Hàng Có PE", f"{len(pe_data)}/17")
-        st.metric("Số Ngân Hàng Có PB", f"{len(pb_data)}/17")
 
 # Interpretation
 st.header("Giải Thích")

@@ -12,23 +12,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from data.loader import merge_all_data
 from analysis.composite import build_composite_score, quintile_backtest, capm_analysis
-from config.config import get_sector_config, CACHE_TTL, QUINTILE_COLORS
+from analysis.self_trading import check_data_availability
+from config import config_steel
+from config.config import CACHE_TTL, SELF_TRADING_WARNING, QUINTILE_COLORS
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
-
-# Filtered bank tickers based on comprehensive quintile analysis across 6 timeframes
-# Only banks with statistical significance (p-value <= 0.05, positive spread)
-# Analysis: Tested T+1, T+3, T+5, T+10, T+20, T+30 horizons
-# Note: Zero values INCLUDED in quintile analysis (not filtered)
-# Updated: 2025-12-22 after fixing inf/-inf bug and re-analyzing with current data
-FILTERED_BANKING_TICKERS = [
-    'ACB',  # Significant at T+5 (p=0.045, spread=0.010)
-    'OCB',  # Significant at T+30 (p=0.005, spread=0.023)
-    'VPB',  # Significant at T+20 (p=0.003) and T+30 (p=0.004)
-]
-
-# Get banking config
-config_banking = get_sector_config('banking')
 
 st.set_page_config(page_title="Q5: Điểm Tổng Hợp", page_icon="🎯", layout="wide")
 
@@ -37,59 +25,49 @@ display_sidebar_logo()
 
 st.title("🎯 Q5: Chiến Lược Điểm Tổng Hợp")
 
-st.info("""
-📊 **Lưu ý**: Tab này chỉ hiển thị 3 mã ngân hàng có dữ liệu khối ngoại có sức dự đoán có ý nghĩa thống kê.
-
-**Tiêu chí lọc:**
-- Quintile analysis trên 6 khung thời gian (T+1 đến T+30)
-- P-value ≤ 0.05 (độ tin cậy ≥ 95%)
-- Spread dương (Q5 > Q1)
-
-**3 mã đạt chuẩn:**
-- **VPB**: Mạnh nhất - 2/6 horizons có ý nghĩa (T+20, T+30)
-- **OCB**: 1/6 horizon có ý nghĩa (T+30)
-- **ACB**: 1/6 horizon có ý nghĩa (T+5)
-
-**Dữ liệu tự doanh**: Đã loại bỏ khỏi công thức (0/17 mã có ý nghĩa thống kê)
-
-*Cập nhật: 22/12/2025 - Đã fix lỗi inf/-inf và phân tích lại với dữ liệu hiện tại*
-""")
-
 st.markdown("""
 **Câu Hỏi Nghiên Cứu**: Chúng ta có thể kết hợp các tín hiệu để tạo alpha không?
 
-**Công Thức Điểm Tổng Hợp** (đã tối ưu):
+**Công Thức Điểm Tổng Hợp**:
 ```
-Điểm = z(Mua Ròng NN) - phân_vị(PE/PB)
+Điểm = z(Mua Ròng NN) + z(Mua Ròng Tự Doanh) - phân_vị(PE/PB)
 ```
 
 Trong đó:
 - **z(NN)**: Z-score của mua ròng nước ngoài (cửa sổ 252 ngày)
+- **z(Tự Doanh)**: Z-score của mua ròng tự doanh (cửa sổ 252 ngày)
 - **phân_vị(PE/PB)**: Phân vị trung bình của PE và PB (cửa sổ 3 năm, đảo ngược)
 
 **Chiến Lược**: Long Q5 (điểm cao nhất), Short Q1 (điểm thấp nhất)
-
-**Lợi ích**: Backtest 5 năm (thay vì 3 năm khi có tự doanh)
 """)
 
 # Load data
 @st.cache_data(ttl=CACHE_TTL)
 def load_all_data():
-    return merge_all_data(config_banking, tickers=FILTERED_BANKING_TICKERS)
+    return merge_all_data(config_steel)
 
 # Sidebar
 st.sidebar.header("Cài Đặt")
+use_self_trading = st.sidebar.checkbox(
+    "Bao Gồm Tự Doanh Trong Điểm",
+    value=True,
+    help="Bỏ chọn để chỉ dùng NN + Định Giá (backtest 5 năm)"
+)
 
 selected_tickers = st.sidebar.multiselect(
     "Chọn Mã Cổ Phiếu",
-    FILTERED_BANKING_TICKERS,
-    default=FILTERED_BANKING_TICKERS
+    TICKERS,
+    default=TICKERS
 )
 
 holding_period = st.sidebar.slider(
     "Kỳ Hạn Nắm Giữ (ngày)",
     1, 30, 5
 )
+
+# Warning
+if use_self_trading:
+    st.warning(SELF_TRADING_WARNING)
 
 # Load and prepare data
 with st.spinner("Đang xây dựng điểm tổng hợp..."):
@@ -98,8 +76,7 @@ with st.spinner("Đang xây dựng điểm tổng hợp..."):
     scores_data = {}
     for ticker in selected_tickers:
         df = data[ticker].copy()
-        # Use foreign trading + valuation only (no self-trading)
-        df = build_composite_score(df, use_self_trading=False)
+        df = build_composite_score(df, use_self_trading=use_self_trading)
         scores_data[ticker] = df
 
 # Current rankings
@@ -116,6 +93,7 @@ for ticker, df in scores_data.items():
             'Điểm Tổng Hợp': latest.get(COMPOSITE_SCORE, np.nan),
             'Ngày': str(latest.get(DATE, ''))[:10] if DATE in latest.index else 'N/A',
             'Z NN': latest.get(FOREIGN_ZSCORE, np.nan),
+            'Z Tự Doanh': latest.get(SELF_ZSCORE, np.nan) if use_self_trading else np.nan,
             'PE %ile': latest.get(PE_PERCENTILE, np.nan),
             'PB %ile': latest.get(PB_PERCENTILE, np.nan)
         })
@@ -133,6 +111,7 @@ if current_rankings:
         rank_df.style.format({
             'Điểm Tổng Hợp': '{:.2f}',
             'Z NN': '{:.2f}',
+            'Z Tự Doanh': '{:.2f}',
             'PE %ile': '{:.1f}',
             'PB %ile': '{:.1f}'
         }).applymap(color_score, subset=['Điểm Tổng Hợp']),
@@ -145,6 +124,13 @@ st.header("Kết Quả Backtest Theo Nhóm")
 for ticker in selected_tickers:
     with st.expander(f"📊 {ticker} - Kết Quả Backtest"):
         df = scores_data[ticker]
+
+        # Check data availability
+        if use_self_trading:
+            avail = check_data_availability(df)
+            if not avail['available']:
+                st.warning(f"⚠️ {avail['reason']}")
+                continue
 
         # Run backtest
         backtest = quintile_backtest(df, horizon=holding_period)
@@ -241,9 +227,8 @@ st.header("Tóm Tắt Hiệu Suất Tổng Hợp")
 
 st.markdown(f"""
 **Cài Đặt**:
-- Công Thức: Khối Ngoại + Định Giá (backtest 5 năm)
+- Bao Gồm Tự Doanh: {'Có (backtest 3 năm)' if use_self_trading else 'Không (backtest 5 năm)'}
 - Kỳ Hạn Nắm Giữ: {holding_period} ngày
-- Số Mã: {len(selected_tickers)} mã
 - Mã Cổ Phiếu: {', '.join(selected_tickers)}
 """)
 
@@ -290,12 +275,12 @@ st.info("""
 **Cách sử dụng chiến lược này**:
 
 1. **Điểm Cao (Q5)**:
-   - Mua ròng mạnh từ Khối Ngoại
+   - Mua ròng mạnh từ NN/tự doanh
    - Phân vị định giá thấp (rẻ)
    - → Ứng viên Long
 
 2. **Điểm Thấp (Q1)**:
-   - Dòng tiền khối ngoại yếu/âm
+   - Dòng tiền yếu/âm
    - Phân vị định giá cao (đắt)
    - → Ứng viên Short hoặc tránh
 
@@ -304,7 +289,8 @@ st.info("""
    - **Sharpe > 1**: Hiệu suất điều chỉnh rủi ro tốt
    - **Alpha Dương**: Vượt thị trường sau khi điều chỉnh rủi ro
 
-**Lợi ích**: Backtest 5 năm với 13 mã có độ nhạy cảm khối ngoại cao
+**Không Có Tự Doanh**: Backtest dài hơn (5 năm) nhưng ít tín hiệu hơn
+**Có Tự Doanh**: Backtest ngắn hơn (3 năm) nhưng tín hiệu đầy đủ hơn
 """)
 
 st.warning("""
@@ -312,7 +298,7 @@ st.warning("""
 
 1. **Hiệu Suất Quá Khứ ≠ Kết Quả Tương Lai**: Các mô hình lịch sử có thể không tiếp tục
 2. **Chi Phí Giao Dịch**: Không bao gồm trong backtest (trượt giá, hoa hồng, tác động)
-3. **Chỉ 13 Mã**: Chỉ áp dụng cho các mã có độ nhạy cảm khối ngoại đáng kể
+3. **Dữ Liệu Giới Hạn**: Đặc biệt tự doanh (chỉ 3 năm)
 4. **Chế Độ Thị Trường**: Kết quả có thể khác nhau ở các điều kiện thị trường khác nhau
 5. **Không Phải Lời Khuyên Đầu Tư**: Đây chỉ là nghiên cứu/giáo dục
 

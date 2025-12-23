@@ -13,25 +13,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from data.loader import merge_all_data
 from analysis.lead_lag import lead_lag_analysis_full, find_optimal_normalization_window
-from config.config import get_sector_config, FORWARD_RETURN_HORIZONS, CACHE_TTL, QUINTILE_COLORS
+from config.config import TICKERS, FORWARD_RETURN_HORIZONS, CACHE_TTL, QUINTILE_COLORS
 from utils.constants import *
 from utils.logo_helper import display_sidebar_logo
-
-# Filtered bank tickers based on comprehensive quintile analysis across 6 timeframes
-# Only banks with statistical significance (p-value <= 0.05, positive spread)
-# Analysis: Tested T+1, T+3, T+5, T+10, T+20, T+30 horizons with 6-year data (2019-2025)
-# Note: Zero values INCLUDED in quintile analysis (not filtered)
-# Updated: 2025-12-23 with 6-year data analysis results
-FILTERED_BANKING_TICKERS = [
-    'OCB',  # 2/6 horizons - STRONGEST (p_min=0.0016, spread_max=3.15%)
-    'VPB',  # 2/6 horizons - VERY STRONG (p_min=0.0033, spread_max=3.13%)
-    'ACB',  # 2/6 horizons - MODERATE (p_min=0.0262, spread_max=1.40%)
-    'SSB',  # 2/6 horizons - MARGINAL (p_min=0.0300, spread_max=1.53%)
-    'EIB',  # 1/6 horizon - MODERATE (p_min=0.0155, spread_max=1.54%)
-]
-
-# Get banking config
-config_banking = get_sector_config('banking')
 
 st.set_page_config(page_title="Q1: Dẫn/Trễ NDTNN", page_icon="🔍", layout="wide")
 
@@ -39,27 +23,6 @@ st.set_page_config(page_title="Q1: Dẫn/Trễ NDTNN", page_icon="🔍", layout=
 display_sidebar_logo()
 
 st.title("🔍 Q1: Phân Tích Dẫn/Trễ Nhà Đầu Tư Nước Ngoài")
-
-st.info("""
-📊 **Lưu ý**: Tab này hiển thị 5 mã ngân hàng có dữ liệu khối ngoại có sức dự đoán có ý nghĩa thống kê.
-
-**Tiêu chí lọc:**
-- Dữ liệu: 6 năm (2019-2025) - match với date range của foreign trading data
-- Quintile analysis trên 6 khung thời gian (T+1, T+3, T+5, T+10, T+20, T+30)
-- P-value ≤ 0.05 (độ tin cậy ≥ 95%)
-- Spread dương (Q5 > Q1)
-
-**5 mã đạt chuẩn (xếp theo độ mạnh):**
-1. **OCB**: MẠNH NHẤT - 2/6 horizons (p_min=0.0016, spread=3.15%)
-2. **VPB**: RẤT MẠNH - 2/6 horizons (p_min=0.0033, spread=3.13%)
-3. **ACB**: TRUNG BÌNH - 2/6 horizons (p_min=0.0262, spread=1.40%)
-4. **SSB**: YẾU - 2/6 horizons (p_min=0.0300, spread=1.53%)
-5. **EIB**: TRUNG BÌNH - 1/6 horizon (p_min=0.0155, spread=1.54%)
-
-**12 mã không đạt:** VCB, TCB, MBB, BID, CTG, STB, HDB, TPB, VIB, SHB, MSB, LPB
-
-*Cập nhật: 23/12/2025 - Phân tích lại với dữ liệu 6 năm (2019-2025)*
-""")
 
 st.markdown("""
 **Câu Hỏi Nghiên Cứu**: Nhà đầu tư nước ngoài có dự đoán được lợi nhuận tương lai không?
@@ -70,14 +33,14 @@ Phân tích này xem xét liệu mua ròng của nhà đầu tư nước ngoài 
 # Load data
 @st.cache_data(ttl=CACHE_TTL)
 def load_all_data():
-    return merge_all_data(config_banking, tickers=FILTERED_BANKING_TICKERS)
+    return merge_all_data(config_steel)
 
 with st.spinner("Đang tải dữ liệu..."):
     data = load_all_data()
 
 # Sidebar filters
 st.sidebar.header("Bộ Lọc")
-selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", FILTERED_BANKING_TICKERS)
+selected_ticker = st.sidebar.selectbox("Chọn Mã Cổ Phiếu", TICKERS)
 selected_horizon = st.sidebar.selectbox(
     "Kỳ Hạn Lợi Nhuận",
     FORWARD_RETURN_HORIZONS,
