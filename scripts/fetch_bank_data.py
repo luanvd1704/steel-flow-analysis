@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
 Banking Sector Trading & Valuation Data Excel Export
-Exports to 3 separate files for better organization:
+Exports to 2 separate files for better organization:
 - bank_foreign_trading.xlsx: CaféF Foreign data (5 years)
-- bank_self_trading.xlsx: CaféF Self trading data (5 years)
 - bank_valuation.xlsx: Smoney valuation data (P/E, P/B, P/CF)
 
 RETRY MODE: Use --retry to only fetch tickers missing from existing files
@@ -24,7 +23,7 @@ for mod_name in ['fetch_cafef_trade_data', 'fetch_smoney_trade_data']:
     if mod_name in sys.modules:
         importlib.reload(sys.modules[mod_name])
 
-from fetch_cafef_trade_data import fetch_cafef_foreign_trades, fetch_cafef_self_trades, fetch_vnstock_adjusted_prices
+from fetch_cafef_trade_data import fetch_cafef_foreign_trades, fetch_vnstock_adjusted_prices
 from fetch_smoney_trade_data import fetch_valuation_history
 import datetime
 import time
@@ -50,9 +49,8 @@ BANK_TICKERS = [
     "TPB", "VIB", "SSB", "SHB", "MSB", "LPB", "OCB", "EIB"
 ]
 
-# Output files (3 separate files) - saved to data/ folder
+# Output files (2 separate files) - saved to data/ folder
 OUTPUT_FOREIGN = "data/bank_foreign_trading.xlsx"
-OUTPUT_SELF = "data/bank_self_trading.xlsx"
 OUTPUT_VALUATION = "data/bank_valuation.xlsx"
 
 # Date range for CaféF (5 years)
@@ -131,22 +129,19 @@ Examples:
         # Retry mode: find missing tickers
         print(f"[MODE] Retry - checking existing files...")
         existing_foreign = get_existing_tickers(OUTPUT_FOREIGN)
-        existing_self = get_existing_tickers(OUTPUT_SELF)
         existing_val = get_existing_tickers(OUTPUT_VALUATION)
 
         # Get union of all missing tickers
         missing_foreign = set(get_missing_tickers(BANK_TICKERS, existing_foreign))
-        missing_self = set(get_missing_tickers(BANK_TICKERS, existing_self))
         missing_val = set(get_missing_tickers(BANK_TICKERS, existing_val))
 
-        tickers_to_fetch = sorted(missing_foreign | missing_self | missing_val)
+        tickers_to_fetch = sorted(missing_foreign | missing_val)
 
         if not tickers_to_fetch:
             print("✅ All tickers already exist in files. Nothing to fetch!")
             return
 
         print(f"  Missing from Foreign: {len(missing_foreign)} - {', '.join(sorted(missing_foreign)) if missing_foreign else 'None'}")
-        print(f"  Missing from Self: {len(missing_self)} - {', '.join(sorted(missing_self)) if missing_self else 'None'}")
         print(f"  Missing from Valuation: {len(missing_val)} - {', '.join(sorted(missing_val)) if missing_val else 'None'}")
         print(f"  Will fetch: {', '.join(tickers_to_fetch)}")
         mode = "append"
@@ -159,8 +154,7 @@ Examples:
     print(f"Tickers to fetch: {', '.join(tickers_to_fetch)}")
     print(f"Output files:")
     print(f"  1. {OUTPUT_FOREIGN}")
-    print(f"  2. {OUTPUT_SELF}")
-    print(f"  3. {OUTPUT_VALUATION}")
+    print(f"  2. {OUTPUT_VALUATION}")
     print(f"CaféF range: {start_date_str} to {end_date_str}")
     print(f"Mode: {mode.upper()}")
     print("=" * 60)
@@ -177,19 +171,16 @@ Examples:
     # Track errors and successes
     error_summary = {
         'foreign': [],
-        'self': [],
         'valuation': []
     }
     success_summary = {
         'foreign': [],
-        'self': [],
         'valuation': []
     }
 
     # Load existing data if in append mode
     existing_data = {
         'foreign': {},
-        'self': {},
         'valuation': {}
     }
 
@@ -205,16 +196,6 @@ Examples:
             except Exception as e:
                 print(f"  Warning: Could not load {OUTPUT_FOREIGN}: {e}")
 
-        # Load existing self data
-        if os.path.exists(OUTPUT_SELF):
-            try:
-                xl = pd.ExcelFile(OUTPUT_SELF)
-                for sheet in xl.sheet_names:
-                    existing_data['self'][sheet] = pd.read_excel(OUTPUT_SELF, sheet_name=sheet)
-                print(f"  Loaded {len(existing_data['self'])} sheets from {OUTPUT_SELF}")
-            except Exception as e:
-                print(f"  Warning: Could not load {OUTPUT_SELF}: {e}")
-
         # Load existing valuation data
         if os.path.exists(OUTPUT_VALUATION):
             try:
@@ -225,9 +206,8 @@ Examples:
             except Exception as e:
                 print(f"  Warning: Could not load {OUTPUT_VALUATION}: {e}")
 
-    # Create 3 separate ExcelWriters
+    # Create 2 separate ExcelWriters
     with pd.ExcelWriter(OUTPUT_FOREIGN, engine='openpyxl') as writer_foreign, \
-         pd.ExcelWriter(OUTPUT_SELF, engine='openpyxl') as writer_self, \
          pd.ExcelWriter(OUTPUT_VALUATION, engine='openpyxl') as writer_valuation:
 
         # First, write existing data if in append mode
@@ -235,8 +215,6 @@ Examples:
             print("\nWriting existing data to new files...")
             for ticker, df in existing_data['foreign'].items():
                 df.to_excel(writer_foreign, sheet_name=ticker, index=False)
-            for ticker, df in existing_data['self'].items():
-                df.to_excel(writer_self, sheet_name=ticker, index=False)
             for ticker, df in existing_data['valuation'].items():
                 df.to_excel(writer_valuation, sheet_name=ticker, index=False)
 
@@ -327,57 +305,7 @@ Examples:
                     log_error(ticker, "Foreign Trading", error_msg, tb_str)
                     error_summary['foreign'].append(ticker)
 
-                # 2. CaféF Self Trading -> steel_self_trading.xlsx
-                try:
-                    print(f"  Fetching CaféF Self...")
-                    cafef_self = fetch_cafef_self_trades(ticker, start_date_str, end_date_str)
-                    if not cafef_self.empty:
-                        # Fetch adjusted prices from vnstock
-                        try:
-                            print(f"  Fetching vnstock adjusted prices for Self...")
-                            vnstock_prices = fetch_vnstock_adjusted_prices(
-                                ticker,
-                                start_date=start_date.strftime('%Y-%m-%d'),
-                                source='VCI'
-                            )
-
-                            # Merge with self trading data (Date column instead of Ngay)
-                            cafef_self = cafef_self.merge(
-                                vnstock_prices[['date', 'adj_close']],
-                                left_on='Date',
-                                right_on='date',
-                                how='left'
-                            )
-
-                            # Add Close column from adjusted price
-                            cafef_self['Close'] = cafef_self['adj_close']
-                            cafef_self = cafef_self.drop(['date', 'adj_close'], axis=1, errors='ignore')
-
-                            print(f"    Merged with adjusted prices")
-                        except Exception as e:
-                            print(f"    Warning: Could not fetch adjusted prices: {e}")
-
-                        # Drop unwanted columns
-                        cafef_self = cafef_self.drop(['ChangePct', 'Close_Unadjusted'], axis=1, errors='ignore')
-
-                        # Export to Excel
-                        sheet_name = ticker  # Simplified sheet name
-                        cafef_self.to_excel(writer_self, sheet_name=sheet_name, index=False)
-                        print(f"    OK: {cafef_self.shape[0]} rows -> {OUTPUT_SELF}")
-                        success_summary['self'].append(ticker)
-                    else:
-                        print(f"    No data")
-                        error_summary['self'].append(f"{ticker} (No data)")
-                    time.sleep(SOURCE_DELAY)
-                except Exception as e:
-                    error_msg = str(e)
-                    tb_str = traceback.format_exc()
-                    print(f"    ❌ ERROR: {error_msg}")
-                    print(f"    (Chi tiết lỗi đã lưu vào {ERROR_LOG_FILE})")
-                    log_error(ticker, "Self Trading", error_msg, tb_str)
-                    error_summary['self'].append(ticker)
-
-                # 3. Smoney Valuation -> steel_valuation.xlsx
+                # 2. Smoney Valuation -> bank_valuation.xlsx
                 try:
                     print(f"  Fetching Smoney Valuation...")
                     smoney_val = fetch_valuation_history(ticker)
@@ -415,9 +343,6 @@ Examples:
     print(f"  Foreign Trading: {len(success_summary['foreign'])}/{len(tickers_to_fetch)} tickers fetched")
     if success_summary['foreign']:
         print(f"    {', '.join(success_summary['foreign'])}")
-    print(f"  Self Trading: {len(success_summary['self'])}/{len(tickers_to_fetch)} tickers fetched")
-    if success_summary['self']:
-        print(f"    {', '.join(success_summary['self'])}")
     print(f"  Valuation: {len(success_summary['valuation'])}/{len(tickers_to_fetch)} tickers fetched")
     if success_summary['valuation']:
         print(f"    {', '.join(success_summary['valuation'])}")
@@ -425,21 +350,17 @@ Examples:
     # Final file statistics
     if mode == "append":
         total_foreign = len(existing_data['foreign']) + len(success_summary['foreign'])
-        total_self = len(existing_data['self']) + len(success_summary['self'])
         total_val = len(existing_data['valuation']) + len(success_summary['valuation'])
         print(f"\nTotal sheets in files:")
         print(f"  Foreign: {total_foreign} sheets")
-        print(f"  Self: {total_self} sheets")
         print(f"  Valuation: {total_val} sheets")
 
     # Error summary
-    total_errors = len(error_summary['foreign']) + len(error_summary['self']) + len(error_summary['valuation'])
+    total_errors = len(error_summary['foreign']) + len(error_summary['valuation'])
     if total_errors > 0:
         print("\nERRORS:")
         if error_summary['foreign']:
             print(f"  Foreign Trading ({len(error_summary['foreign'])} failed): {', '.join(error_summary['foreign'])}")
-        if error_summary['self']:
-            print(f"  Self Trading ({len(error_summary['self'])} failed): {', '.join(error_summary['self'])}")
         if error_summary['valuation']:
             print(f"  Valuation ({len(error_summary['valuation'])} failed): {', '.join(error_summary['valuation'])}")
         print(f"\nChi tiet loi da luu vao: {ERROR_LOG_FILE}")
@@ -451,8 +372,7 @@ Examples:
     print("=" * 60)
     print(f"Files {'updated' if mode == 'append' else 'created'}:")
     print(f"  1. {OUTPUT_FOREIGN} (Foreign trading)")
-    print(f"  2. {OUTPUT_SELF} (Self trading)")
-    print(f"  3. {OUTPUT_VALUATION} (Valuation metrics)")
+    print(f"  2. {OUTPUT_VALUATION} (Valuation metrics)")
     print(f"Tickers processed: {len(tickers_to_fetch)}")
     print(f"Duration: {duration}")
     print("=" * 60)
